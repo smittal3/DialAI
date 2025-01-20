@@ -1,0 +1,13 @@
+amazon-transcribe==0.6.2
+awscrt==0.16.26
+boto3==1.29.2
+botocore==1.32.7
+cffi==1.17.0
+jmespath==1.0.1
+PyAudio==0.2.14
+pycparser==2.22
+python-dateutil==2.9.0.post0
+s3transfer==0.7.0
+six==1.16.0
+sounddevice==0.4.6
+urllib3==2.0.7
