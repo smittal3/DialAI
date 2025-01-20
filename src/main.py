@@ -6,7 +6,7 @@ import boto3
 import keyboard
 import time
 import json
-from queue import Queue
+from queue import Queue, Empty
 from botocore.config import Config
 from amazon_transcribe.client import TranscribeStreamingClient
 from amazon_transcribe.handlers import TranscriptResultStreamHandler
@@ -21,7 +21,9 @@ class AudioRecorder:
     self.audio = pyaudio.PyAudio()
     self.stream = None
     self.is_recording = False
-        
+    self.audio_queue = Queue()
+    self.recording_thread = None
+
   def start_recording(self):
     #print("IN AUDIO RECORDER, STARTING STREAM")
     self.stream = self.audio.open(
@@ -32,19 +34,37 @@ class AudioRecorder:
       frames_per_buffer=self.chunk_size
     )
     self.is_recording = True
-      
+    self.recording_thread = threading.Thread(target=self._record_audio)
+    self.recording_thread.start()
+  
+  def _record_audio(self):
+    while self.is_recording:
+      try:
+        data = self.stream.read(self.chunk_size, exception_on_overflow=False)
+        self.audio_queue.put(np.frombuffer(data, dtype=np.int16))
+      except Exception as e:
+        print(f"Audio recording error: {e}")
+        break
+    
   def stop_recording(self):
+    self.is_recording = False
+    if self.recording_thread:
+      self.recording_thread.join()
     if self.stream:
       self.stream.stop_stream()
       self.stream.close()
-    self.is_recording = False
+  
+  def clear_audio_queue(self):
+    # get lock on queue and clear it
+    with self.audio_queue.mutex:
+      self.audio_queue.queue.clear()
         
-  def read_audio_chunk(self):
-    #print("IN AUDIO RECORDER, READING CHUNK")
-    if self.is_recording:
-      data = self.stream.read(self.chunk_size)
-      return np.frombuffer(data, dtype=np.int16)  # Read as 16-bit PCM
-    return None
+  def get_audio_chunk(self, timeout=0.1):
+    """Get an audio chunk from the queue. Returns None if the queue is empty."""
+    try:
+      return self.audio_queue.get(timeout=timeout)
+    except Empty:
+      return None
   
 
 class SilenceDetector:
@@ -151,7 +171,7 @@ class ConversationManager:
     async def write_chunks():
       #print("processing audio chunks") 
       while self.recorder.is_recording and not self.interrupt_event.is_set():
-        chunk = self.recorder.read_audio_chunk()
+        chunk = self.recorder.get_audio_chunk()
         if chunk is not None:
           #print("sending audio chunk to transcript and giving up lock with await")
           await stream.input_stream.send_audio_event(audio_chunk=chunk.tobytes())
@@ -207,6 +227,8 @@ class ConversationManager:
       
       if self.interrupt_event.is_set():
         print("\nInterrupted! Starting new conversation...")
+        # If conversation is interrupted, clear stale audio from queue
+        self.recorder.clear_audio_queue()
         continue
             
       print("\nWaiting for next input...")
