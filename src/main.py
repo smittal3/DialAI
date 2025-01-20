@@ -12,7 +12,7 @@ from amazon_transcribe.client import TranscribeStreamingClient
 from amazon_transcribe.handlers import TranscriptResultStreamHandler
 from amazon_transcribe.model import TranscriptEvent
 
-from config import AppConfig
+from config import AppConfig, api_request_list
 
 class AudioRecorder:
   def __init__(self, chunk_size=2048*2, sample_rate=16000):
@@ -119,35 +119,75 @@ class TranscriptionHandler(TranscriptResultStreamHandler):
     return transcript
 
 class BedrockInference:
-  def __init__(self):
-    config = Config(
-        read_timeout=30,
-        retries={'max_attempts': 2}
+  def __init__(self, config):
+    bedrock_config = Config(
+      read_timeout=30,
+      retries={'max_attempts': 2}
     )
-    #self.client = boto3.client('bedrock-runtime', config=config)
+    self.client = boto3.client('bedrock-runtime', config=bedrock_config, region_name=config.aws_region)
+    self.config = config
         
   async def get_response(self, text):
-    # prompt = {
-    #     "prompt": text,
-    #     "max_tokens_to_sample": 500,
-    #     "temperature": 0.7,
-    #     "top_p": 0.9,
-    # }
+    body = self.define_body(text)
+    try: 
+      body_json = json.dumps(body)
+      model_params = api_request_list[self.config.model_id]
+      response = self.client.invoke_model_with_response_stream(
+        body=body_json, 
+        modelId=model_params['modelId'], 
+        accept=model_params['accept'], 
+        contentType=model_params['contentType']
+      )
       
-    # response = self.client.invoke_model(
-    #   modelId="anthropic.claude-v2",
-    #   body=json.dumps(prompt)
-    # )
-    # response_body = json.loads(response['body'].read())
-    # return response_body['completion']
-    return "no response"
+      bedrock_stream = response.get('body')
+      bedrock_response = self.extract_response(bedrock_stream)
+    except Exception as e: 
+      print(f"Bedrock Error {e}")
+      bedrock_response = "no response, error"
+    
+    for audio in bedrock_response:
+      print(audio)
+
+    return bedrock_response
+  
+  def define_body(self, text):
+    body = api_request_list[self.config.model_id]['body']
+    body['prompt'] = "Be helpful, keep your responses short under 10 words."
+    print(f"prompt is {body}")
+    return body
+  
+  def extract_response(self, bedrock_stream):
+    prefix = ''
+
+    if bedrock_stream:
+      for event in bedrock_stream:
+        chunk = event.get('chunk')
+        if chunk:
+          chunk_obj = json.loads(chunk.get('bytes').decode())
+          text = chunk_obj['generation']
+
+          if '.' in text:
+            a = text.split('.')[:-1]
+            to_polly = ''.join([prefix, '.'.join(a), '. '])
+            prefix = text.split('.')[-1]
+            print(to_polly, flush=True, end='')
+            yield to_polly
+          else:
+            prefix = ''.join([prefix, text])
+
+      if prefix != '':
+        print(prefix, flush=True, end='')
+        yield f'{prefix}.'
+
+      print('\n')
+    
   
 class ConversationManager:
-  def __init__(self):
+  def __init__(self, config):
     self.recorder = AudioRecorder()
     self.silence_detector = SilenceDetector()
-    self.transcribe_client = TranscribeStreamingClient(region="us-west-2")
-    self.bedrock = BedrockInference()
+    self.transcribe_client = TranscribeStreamingClient(region=config.aws_region)
+    self.bedrock = BedrockInference(config)
     self.interrupt_event = threading.Event()
   
   # Detect enter being pressed in a seperate thread
@@ -241,7 +281,7 @@ async def main():
     language_code="en-US"
   )
   
-  manager = ConversationManager()
+  manager = ConversationManager(config)
   await manager.run_conversation()
   
 
