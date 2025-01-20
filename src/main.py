@@ -141,18 +141,15 @@ class BedrockInference:
       )
       
       bedrock_stream = response.get('body')
-      bedrock_response = self.extract_response(bedrock_stream)
+      async for chunk in self.process_stream(bedrock_stream):
+        if self.interrupt_event.is_set():
+          print("\nInference interrupted!")
+          break
+        yield chunk
+                
     except Exception as e: 
       print(f"Bedrock Error {e}")
-      bedrock_response = "no response, error"
-    
-    for audio in bedrock_response:
-      if self.interrupt_event.is_set():  # Check for interrupt event
-        print("\nInference interrupted!")
-        break
-      print(audio)
-
-    return bedrock_response
+      yield "no response, error"
   
   def define_body(self, text):
     body = api_request_list[self.config.model_id]['body']
@@ -160,30 +157,25 @@ class BedrockInference:
     print(f"prompt is {body}")
     return body
   
-  def extract_response(self, bedrock_stream):
-    prefix = ''
-
+  async def process_stream(self, bedrock_stream):
+    buffer = ''
+    
     if bedrock_stream:
       for event in bedrock_stream:
         chunk = event.get('chunk')
         if chunk:
           chunk_obj = json.loads(chunk.get('bytes').decode())
           text = chunk_obj['generation']
-
-          if '.' in text:
-            a = text.split('.')[:-1]
-            to_polly = ''.join([prefix, '.'.join(a), '. '])
-            prefix = text.split('.')[-1]
-            print(to_polly, flush=True, end='')
-            yield to_polly
-          else:
-            prefix = ''.join([prefix, text])
-
-      if prefix != '':
-        print(prefix, flush=True, end='')
-        yield f'{prefix}.'
-
-      print('\n')
+          buffer += text
+          
+          # Stream out complete sentences
+          while '.' in buffer:
+            sentence, buffer = buffer.split('.', 1)
+            yield sentence + '.'
+                  
+      # Yield any remaining text in buffer
+      if buffer:
+        yield buffer + ('.' if not buffer.endswith('.') else '')
     
   
 class ConversationManager:
@@ -225,8 +217,7 @@ class ConversationManager:
             break
         # Yield control so we can asynchronously process transcription events as well. 
         # while loop eats up cpu time
-        #print("sleeping now for 0.1 sec")
-        await asyncio.sleep(0.1)
+        #await asyncio.sleep(0.1)
           
       await stream.input_stream.end_stream()
 
@@ -251,10 +242,10 @@ class ConversationManager:
         transcript = await self.process_audio_stream()
         end_recording = time.time()
         if transcript:
-          print(f"\nTranscript: {transcript}")
-          response = await self.bedrock.get_response(transcript)
+          print(f"\nTranscript: {transcript} \n Bedrock Response:")
+          async for response_chunk in self.bedrock.get_response(transcript):
+            print(response_chunk, end='', flush=True)
           response_bedrock = time.time()
-          print(f"\nResponse: {response}")
           recording_time = end_recording - start_recording
           bedrock_time = response_bedrock - end_recording
           total_time = response_bedrock - start_recording  # Total time from start to Bedrock response
