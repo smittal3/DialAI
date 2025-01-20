@@ -119,13 +119,14 @@ class TranscriptionHandler(TranscriptResultStreamHandler):
     return transcript
 
 class BedrockInference:
-  def __init__(self, config):
+  def __init__(self, config, interrupt):
     bedrock_config = Config(
       read_timeout=30,
       retries={'max_attempts': 2}
     )
     self.client = boto3.client('bedrock-runtime', config=bedrock_config, region_name=config.aws_region)
     self.config = config
+    self.interrupt_event = interrupt
         
   async def get_response(self, text):
     body = self.define_body(text)
@@ -146,6 +147,9 @@ class BedrockInference:
       bedrock_response = "no response, error"
     
     for audio in bedrock_response:
+      if self.interrupt_event.is_set():  # Check for interrupt event
+        print("\nInference interrupted!")
+        break
       print(audio)
 
     return bedrock_response
@@ -187,8 +191,8 @@ class ConversationManager:
     self.recorder = AudioRecorder()
     self.silence_detector = SilenceDetector()
     self.transcribe_client = TranscribeStreamingClient(region=config.aws_region)
-    self.bedrock = BedrockInference(config)
     self.interrupt_event = threading.Event()
+    self.bedrock = BedrockInference(config, self.interrupt_event)
   
   # Detect enter being pressed in a seperate thread
   def setup_interrupt_detection(self):
