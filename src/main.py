@@ -23,7 +23,7 @@ class AudioRecorder:
     self.is_recording = False
         
   def start_recording(self):
-    print("IN AUDIO RECORDER, STARTING STREAM")
+    #print("IN AUDIO RECORDER, STARTING STREAM")
     self.stream = self.audio.open(
       format=pyaudio.paInt16,  # Use 16-bit PCM
       channels=1,
@@ -40,7 +40,7 @@ class AudioRecorder:
     self.is_recording = False
         
   def read_audio_chunk(self):
-    print("IN AUDIO RECORDER, READING CHUNK")
+    #print("IN AUDIO RECORDER, READING CHUNK")
     if self.is_recording:
       data = self.stream.read(self.chunk_size)
       return np.frombuffer(data, dtype=np.int16)  # Read as 16-bit PCM
@@ -61,14 +61,14 @@ class SilenceDetector:
     audio_chunk_normalized = audio_chunk / 32768.0
 
     db = 20 * np.log10(np.max(np.abs(audio_chunk_normalized)) + 1e-10)
-    print(f"Current dB level: {db}")
-    print(f"Chunk length: {len(audio_chunk)}")
+    #print(f"Current dB level: {db}")
+    #print(f"Chunk length: {len(audio_chunk)}")
     if db < self.threshold:
       self.silence_counter += len(audio_chunk)
     else:
       self.silence_counter = 0
     
-    print(f"CHECKING SILENCE {self.silence_counter} >= {self.min_silence_samples}")
+    #print(f"CHECKING SILENCE {self.silence_counter} >= {self.min_silence_samples}")
     return self.silence_counter >= self.min_silence_samples
     
   def reset(self):
@@ -83,9 +83,9 @@ class TranscriptionHandler(TranscriptResultStreamHandler):
   # Everytime a transcript event is returned from AWS, append to buffer
   async def handle_transcript_event(self, transcript_event: TranscriptEvent):
     results = transcript_event.transcript.results
-    print(f"transcript handler invoked with results arr of len {len(results)}")
+    #print(f"transcript handler invoked with results arr of len {len(results)}")
     for result in results:
-      print(f"returned result in transcript handler: {result}")
+      #print(f"returned result in transcript handler: {result}")
       if not result.is_partial:
         transcript = result.alternatives[0].transcript
         self.transcript_buffer.append(transcript)
@@ -139,7 +139,7 @@ class ConversationManager:
     keyboard.on_press(on_enter)
     
   async def process_audio_stream(self):
-    print("starting transcription stream")
+    #print("starting transcription stream")
     stream = await self.transcribe_client.start_stream_transcription(
       language_code="en-US",
       media_sample_rate_hz=16000,
@@ -149,26 +149,26 @@ class ConversationManager:
     handler = TranscriptionHandler(stream.output_stream)
 
     async def write_chunks():
-      print("processing audio chunks") 
+      #print("processing audio chunks") 
       while self.recorder.is_recording and not self.interrupt_event.is_set():
         chunk = self.recorder.read_audio_chunk()
         if chunk is not None:
-          print("sending audio chunk to transcript and giving up lock with await")
+          #print("sending audio chunk to transcript and giving up lock with await")
           await stream.input_stream.send_audio_event(audio_chunk=chunk.tobytes())
-          print("Got response from transcribe, sending to silence check")
+          #print("Got response from transcribe, sending to silence check")
           if self.silence_detector.is_silent(chunk):
             print("detected silence")
             break
         # Yield control so we can asynchronously process transcription events as well. 
         # while loop eats up cpu time
-        print("sleeping now for 0.1 sec")
+        #print("sleeping now for 0.1 sec")
         await asyncio.sleep(0.1)
           
       await stream.input_stream.end_stream()
 
     loop = asyncio.get_event_loop()
     await asyncio.gather(write_chunks(), handler.handle_events())
-    print("returning out of processing audio stream and returning transcript")
+    #print("returning out of processing audio stream and returning transcript")
     return handler.get_transcript()
   
   async def run_conversation(self):

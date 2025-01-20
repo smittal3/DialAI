@@ -26,3 +26,5 @@ class AppConfig:
     sample_rate: int = 16000
     channels: int = 1
     chunk_size: int = 1024
+    logging_verbosity: int = 2
+    log_to_stdout: bool = False
