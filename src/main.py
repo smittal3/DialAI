@@ -14,6 +14,76 @@ from amazon_transcribe.model import TranscriptEvent
 
 from config import AppConfig, api_request_list
 
+class SpeechGenerator():
+  def __init__(self, config, speech_complete):
+    self.config = config
+    self.polly = boto3.client('polly', region_name=config.aws_region)
+    self.audio = pyaudio.PyAudio()
+    self.stream = None
+    self.chunk = 1024
+    self.is_processing = False
+    self.text_queue = Queue()
+    self.generating_thread = None
+    self.complete = speech_complete
+    
+  def start_generating(self):
+    self.is_processing = True
+    self.stream = self.audio.open(
+      format=pyaudio.paInt16, 
+      channels=1, 
+      rate=16000, 
+      output=True
+    )
+    self.generating_thread = threading.Thread(target=self._generate_audio)
+    self.generating_thread.start()
+    
+  def _generate_audio(self):
+    while self.is_processing:
+      try: 
+        # add a larger timeout to give bedrock time to stream its response
+        # Still a little janky. At 0.5 we are skipping, at 1 theres too much delay. Need 
+        # some sort of diff mechanism.
+        text = self.text_queue.get(timeout=0.75)
+        if text:
+          print(f"getting from queue of size {self.text_queue.qsize()}")
+          response = self.polly.synthesize_speech(
+            Text=text,
+            Engine=self.config.polly['engine'],
+            LanguageCode=self.config.polly['language'],
+            VoiceId=self.config.polly['voice'],
+            OutputFormat=self.config.polly['outputFormat'],
+          )
+          
+          stream = response['AudioStream']
+          while True:
+            audio_chunk = stream.read(self.chunk)
+            if not audio_chunk:
+              break
+            self.stream.write(audio_chunk)
+      except Empty:
+        # If queue is empty, set the completion flag
+        self.complete.set()
+        continue
+      except Exception as e:
+        print(f"Error in Polly processing: {e}")
+
+    
+  def stop_generating(self):
+    self.is_processing = False
+    if self.generating_thread:
+      self.generating_thread.join()
+    if self.stream:
+      self.stream.stop_stream()
+      self.stream.close()
+  
+  def add_text_to_queue(self, text):
+    self.text_queue.put(text)
+  
+  def clear_queue(self):
+    with self.text_queue.mutex:
+      self.text_queue.queue.clear()
+        
+
 class AudioRecorder:
   def __init__(self, chunk_size=2048*2, sample_rate=16000):
     self.chunk_size = chunk_size
@@ -60,7 +130,6 @@ class AudioRecorder:
       self.audio_queue.queue.clear()
         
   def get_audio_chunk(self, timeout=0.1):
-    """Get an audio chunk from the queue. Returns None if the queue is empty."""
     try:
       return self.audio_queue.get(timeout=timeout)
     except Empty:
@@ -119,7 +188,7 @@ class TranscriptionHandler(TranscriptResultStreamHandler):
     return transcript
 
 class BedrockInference:
-  def __init__(self, config, interrupt):
+  def __init__(self, config, interrupt, bedrock_context, bedrock_complete):
     bedrock_config = Config(
       read_timeout=30,
       retries={'max_attempts': 2}
@@ -127,9 +196,13 @@ class BedrockInference:
     self.client = boto3.client('bedrock-runtime', config=bedrock_config, region_name=config.aws_region)
     self.config = config
     self.interrupt_event = interrupt
+    self.context = bedrock_context
+    self.bedrock_complete = bedrock_complete
         
   async def get_response(self, text):
+    self.context.add_user_input(text)
     body = self.define_body(text)
+    
     try: 
       body_json = json.dumps(body)
       model_params = api_request_list[self.config.model_id]
@@ -139,13 +212,17 @@ class BedrockInference:
         accept=model_params['accept'], 
         contentType=model_params['contentType']
       )
-      
+      full_response = ""
       bedrock_stream = response.get('body')
       async for chunk in self.process_stream(bedrock_stream):
+        full_response += chunk
+        yield chunk
         if self.interrupt_event.is_set():
           print("\nInference interrupted!")
           break
-        yield chunk
+      
+      self.context.add_bedrock_output(full_response)
+      self.bedrock_complete.set()
                 
     except Exception as e: 
       print(f"Bedrock Error {e}")
@@ -153,7 +230,7 @@ class BedrockInference:
   
   def define_body(self, text):
     body = api_request_list[self.config.model_id]['body']
-    body['prompt'] = "Be helpful, keep your responses short under 10 words."
+    body['prompt'] = self.context.get_context()
     print(f"prompt is {body}")
     return body
   
@@ -177,14 +254,39 @@ class BedrockInference:
       if buffer:
         yield buffer + ('.' if not buffer.endswith('.') else '')
     
+class BedrockContext: 
+  def __init__(self, config):
+    self.history = []
+    self.formatted_context= f"<|begin_of_text|><|start_header_id|>system \
+                              <|end_header_id|>\n\n{config.system_prompt}<|eot_id|>\n"
   
+  def add_user_input(self, user_input):
+    self.history.append({"role":"user", "message": user_input})
+    
+    user_turn = f"<|start_header_id|>user<|end_header_id|>\n\n{user_input}<|eot_id|>"
+    partial_model_tag = f"<|start_header_id|>assistant<|end_header_id|>"
+    self.formatted_context += f"{user_turn}\n{partial_model_tag}\n"
+    
+  def add_bedrock_output(self, bedrock_output):
+    self.history.append({"role":"assistant", "message": bedrock_output})
+    self.formatted_context += f"\n{bedrock_output}<|eot_id|>\n"
+  
+  def get_context(self):
+    return self.formatted_context
+
+
 class ConversationManager:
   def __init__(self, config):
+    self.interrupt_event = threading.Event()
+    self.speech_complete = threading.Event()
+    self.bedrock_complete = threading.Event()
     self.recorder = AudioRecorder()
+    self.speech_generator = SpeechGenerator(config, self.speech_complete)
     self.silence_detector = SilenceDetector()
     self.transcribe_client = TranscribeStreamingClient(region=config.aws_region)
-    self.interrupt_event = threading.Event()
-    self.bedrock = BedrockInference(config, self.interrupt_event)
+    self.bedrock_context = BedrockContext(config)
+    self.bedrock = BedrockInference(config, self.interrupt_event, self.bedrock_context, self.bedrock_complete)
+    # Flag to control silence detection during bedrock inference
   
   # Detect enter being pressed in a seperate thread
   def setup_interrupt_detection(self):
@@ -234,6 +336,8 @@ class ConversationManager:
       self.recorder.start_recording()
       self.silence_detector.reset()
       self.interrupt_event.clear()
+      self.speech_complete.clear()
+      self.bedrock_complete.clear()
         
       try:
         # Get all transcribed data so far and send to inference for bedrock
@@ -242,9 +346,17 @@ class ConversationManager:
         transcript = await self.process_audio_stream()
         end_recording = time.time()
         if transcript:
+          self.speech_generator.start_generating()
           print(f"\nTranscript: {transcript} \n Bedrock Response:")
           async for response_chunk in self.bedrock.get_response(transcript):
+            self.speech_generator.add_text_to_queue(response_chunk)
+            print("added to queue")
             print(response_chunk, end='', flush=True)
+          
+          await asyncio.gather(
+            asyncio.get_event_loop().run_in_executor(None, lambda: self.interrupt_event.wait() if self.interrupt_event.is_set() else self.bedrock_complete.wait()),
+            asyncio.get_event_loop().run_in_executor(None, lambda: self.speech_complete.wait())
+          )
           response_bedrock = time.time()
           recording_time = end_recording - start_recording
           bedrock_time = response_bedrock - end_recording
@@ -256,14 +368,19 @@ class ConversationManager:
           print(f"\nTotal time: {total_time:.6f} seconds")
         
       except Exception as e:
-          print(f"Error: {e}")
+        print(f"Error: {e}")
       finally:
-          self.recorder.stop_recording()
+        self.recorder.stop_recording()
+        self.speech_generator.stop_generating()
+        # These queues are clearing here under the assumption that the outer while loop is only iterating once per conversational turn
+        # and our asyncio.gather() on speech generation is valid. Currently we are using a janky timeout mechanism. This should be 
+        # reevaluated. Without this clear here, the mic is picking up audio data from polly's output. This is not intended. Ideally
+        # we find a way to suspend the audio recording thr
+        self.recorder.clear_audio_queue()
+        self.speech_generator.clear_queue()   
       
       if self.interrupt_event.is_set():
-        print("\nInterrupted! Starting new conversation...")
-        # If conversation is interrupted, clear stale audio from queue
-        self.recorder.clear_audio_queue()
+        print("\nInterrupted! Starting new conversation...") 
         continue
             
       print("\nWaiting for next input...")

@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 api_request_list = {
     'meta.llama3-1-70b-instruct-v1:0': {
@@ -28,6 +28,7 @@ api_request_list = {
 def get_model_ids():
     return list(api_request_list.keys())
 
+system_prompt = "Hi, you are a helpful assistant. Keep your responses concise and under 20 words. Be conversational."
 
 @dataclass
 class AppConfig:
@@ -40,3 +41,10 @@ class AppConfig:
     chunk_size: int = 1024
     logging_verbosity: int = 2
     log_to_stdout: bool = False
+    system_prompt: str = system_prompt
+    polly: dict = field(default_factory=lambda: {
+        'engine' : 'neural', 
+        'language' : 'en-US', 
+        'voice' : 'Danielle', 
+        'outputFormat' : 'pcm'
+    })
