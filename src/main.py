@@ -6,6 +6,7 @@ import boto3
 import keyboard
 import time
 import json
+from collections import defaultdict
 from queue import Queue, Empty
 from botocore.config import Config
 from amazon_transcribe.client import TranscribeStreamingClient
@@ -15,7 +16,7 @@ from amazon_transcribe.model import TranscriptEvent
 from config import AppConfig, api_request_list
 
 class SpeechGenerator():
-  def __init__(self, config, speech_complete):
+  def __init__(self, config, speech_complete, bedrock_complete, interrupt_event):
     self.config = config
     self.polly = boto3.client('polly', region_name=config.aws_region)
     self.audio = pyaudio.PyAudio()
@@ -25,13 +26,15 @@ class SpeechGenerator():
     self.text_queue = Queue()
     self.generating_thread = None
     self.complete = speech_complete
+    self.bedrock_complete = bedrock_complete
+    self.interrupt = interrupt_event
     
   def start_generating(self):
     self.is_processing = True
     self.stream = self.audio.open(
-      format=pyaudio.paInt16, 
-      channels=1, 
-      rate=16000, 
+      format=pyaudio.paInt16,
+      channels=1,
+      rate=16000,
       output=True
     )
     self.generating_thread = threading.Thread(target=self._generate_audio)
@@ -39,19 +42,19 @@ class SpeechGenerator():
     
   def _generate_audio(self):
     while self.is_processing:
-      try: 
+      try:
         # add a larger timeout to give bedrock time to stream its response
         # Still a little janky. At 0.5 we are skipping, at 1 theres too much delay. Need 
         # some sort of diff mechanism.
-        text = self.text_queue.get(timeout=0.75)
+        text = self.text_queue.get(timeout=0.1)
         if text:
-          print(f"getting from queue of size {self.text_queue.qsize()}")
+          # print(f"getting from queue of size {self.text_queue.qsize()}")
           response = self.polly.synthesize_speech(
             Text=text,
             Engine=self.config.polly['engine'],
             LanguageCode=self.config.polly['language'],
             VoiceId=self.config.polly['voice'],
-            OutputFormat=self.config.polly['outputFormat'],
+            OutputFormat=self.config.polly['outputFormat']
           )
           
           stream = response['AudioStream']
@@ -59,10 +62,14 @@ class SpeechGenerator():
             audio_chunk = stream.read(self.chunk)
             if not audio_chunk:
               break
+            # signal completion prematurely
+            if self.interrupt.is_set():
+              self.complete.set()
             self.stream.write(audio_chunk)
       except Empty:
         # If queue is empty, set the completion flag
-        self.complete.set()
+        if self.bedrock_complete.is_set():
+          self.complete.set()
         continue
       except Exception as e:
         print(f"Error in Polly processing: {e}")
@@ -137,10 +144,11 @@ class AudioRecorder:
   
 
 class SilenceDetector:
-  def __init__(self, threshold=-30, min_silence_duration=1.0, sample_rate=16000):
+  def __init__(self, long_silence_indicator, threshold=-30, min_silence_duration=1.0, sample_rate=16000):
     self.threshold = threshold
     self.min_silence_samples = int(min_silence_duration * sample_rate)
     self.silence_counter = 0
+    self.long_silence_indicator = long_silence_indicator
         
   def is_silent(self, audio_chunk):
     if audio_chunk is None:
@@ -156,12 +164,14 @@ class SilenceDetector:
       self.silence_counter += len(audio_chunk)
     else:
       self.silence_counter = 0
-    
+      self.long_silence_indicator.clear()
+      
     #print(f"CHECKING SILENCE {self.silence_counter} >= {self.min_silence_samples}")
     return self.silence_counter >= self.min_silence_samples
     
   def reset(self):
     self.silence_counter = 0
+    self.long_silence_indicator.clear()
     
     
 class TranscriptionHandler(TranscriptResultStreamHandler):
@@ -280,9 +290,10 @@ class ConversationManager:
     self.interrupt_event = threading.Event()
     self.speech_complete = threading.Event()
     self.bedrock_complete = threading.Event()
+    self.long_silence_indicator = threading.Event()
     self.recorder = AudioRecorder()
-    self.speech_generator = SpeechGenerator(config, self.speech_complete)
-    self.silence_detector = SilenceDetector()
+    self.speech_generator = SpeechGenerator(config, self.speech_complete, self.bedrock_complete, self.interrupt_event)
+    self.silence_detector = SilenceDetector(self.long_silence_indicator)
     self.transcribe_client = TranscribeStreamingClient(region=config.aws_region)
     self.bedrock_context = BedrockContext(config)
     self.bedrock = BedrockInference(config, self.interrupt_event, self.bedrock_context, self.bedrock_complete)
@@ -310,16 +321,22 @@ class ConversationManager:
       #print("processing audio chunks") 
       while self.recorder.is_recording and not self.interrupt_event.is_set():
         chunk = self.recorder.get_audio_chunk()
+        # If not silence and valid chunk, send audio events for transcribe
         if chunk is not None:
           #print("sending audio chunk to transcript and giving up lock with await")
-          await stream.input_stream.send_audio_event(audio_chunk=chunk.tobytes())
-          #print("Got response from transcribe, sending to silence check")
           if self.silence_detector.is_silent(chunk):
+            # if a conversational turn is over and continuous silence is detected, block. Otherwise if "new" silence is detected, break
+            if self.long_silence_indicator.is_set():
+              continue
             print("detected silence")
             break
+          
+          await stream.input_stream.send_audio_event(audio_chunk=chunk.tobytes())
+          #print("Got response from transcribe, sending to silence check")
+          
         # Yield control so we can asynchronously process transcription events as well. 
         # while loop eats up cpu time
-        #await asyncio.sleep(0.1)
+        await asyncio.sleep(0.1)
           
       await stream.input_stream.end_stream()
 
@@ -334,7 +351,6 @@ class ConversationManager:
     while True:
       print("\nListening... (Press Enter to interrupt)")
       self.recorder.start_recording()
-      self.silence_detector.reset()
       self.interrupt_event.clear()
       self.speech_complete.clear()
       self.bedrock_complete.clear()
@@ -344,25 +360,24 @@ class ConversationManager:
         print("IN MAIN, process audio stream operation until silence")
         start_recording = time.time()
         transcript = await self.process_audio_stream()
+        self.recorder.stop_recording()
         end_recording = time.time()
         if transcript:
           self.speech_generator.start_generating()
           print(f"\nTranscript: {transcript} \n Bedrock Response:")
           async for response_chunk in self.bedrock.get_response(transcript):
             self.speech_generator.add_text_to_queue(response_chunk)
-            print("added to queue")
             print(response_chunk, end='', flush=True)
+
+          # Wait until speech synthesis is complete, interrupt event is handled in that thread
+          self.speech_complete.wait()
+          self.speech_generator.stop_generating()
           
-          await asyncio.gather(
-            asyncio.get_event_loop().run_in_executor(None, lambda: self.interrupt_event.wait() if self.interrupt_event.is_set() else self.bedrock_complete.wait()),
-            asyncio.get_event_loop().run_in_executor(None, lambda: self.speech_complete.wait())
-          )
           response_bedrock = time.time()
           recording_time = end_recording - start_recording
           bedrock_time = response_bedrock - end_recording
-          total_time = response_bedrock - start_recording  # Total time from start to Bedrock response
+          total_time = response_bedrock - start_recording 
           
-          # Print the durations
           print(f"\nRecording time: {recording_time:.6f} seconds")
           print(f"\nBedrock time: {bedrock_time:.6f} seconds")
           print(f"\nTotal time: {total_time:.6f} seconds")
@@ -372,6 +387,8 @@ class ConversationManager:
       finally:
         self.recorder.stop_recording()
         self.speech_generator.stop_generating()
+        # Set this to block until a user is ready to speak again (detected via noise)
+        self.long_silence_indicator.set()
         # These queues are clearing here under the assumption that the outer while loop is only iterating once per conversational turn
         # and our asyncio.gather() on speech generation is valid. Currently we are using a janky timeout mechanism. This should be 
         # reevaluated. Without this clear here, the mic is picking up audio data from polly's output. This is not intended. Ideally
@@ -382,7 +399,7 @@ class ConversationManager:
       if self.interrupt_event.is_set():
         print("\nInterrupted! Starting new conversation...") 
         continue
-            
+               
       print("\nWaiting for next input...")
       
   
