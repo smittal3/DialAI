@@ -31,20 +31,20 @@ Uses AWS Polly to synthesize the AI-generated response into speech, generating a
            Main Event Loop (Async)
                     |                   
                     | - - - - - - - >|  Audio Recording Thread 🎤
-                    |    Stream data | 
-                    | <--------------|
+                    |                | 
                     |                |
-             Silence Detection 🤐    |
-                    |                |
+                    |  (Stream data) |
+                    | < - - - - - - -|
+            Silence Detection 🤐     |        
                     |                |
                     ▼                |
               AWS Transcribe 📝      |
                     |                |
-   (Streaming Data) |                | 
+      (Stream Data) |<---------------|  Terminate Thread
                     ▼                |
              Accumulate User Input   |
                     |                |
-                    | < - - - - - - -|  Terminate Thread
+                    |                |  
                     ▼
                  Bedrock 💻
                     |   
@@ -52,11 +52,11 @@ Uses AWS Polly to synthesize the AI-generated response into speech, generating a
                     | - - - - - - - >|  Speech Synthesis Thread 🗣️
                     |                |
                     |   Stream data  |
-                    | <--------------|  
+                    | < - - - - - - -|  
                     |                |              
                     ▼                |
              Audio Output 🔈         |
-                    | < - - - - - - -|  Terminate Thread
+                    |<---------------|  Terminate Thread
 ```
 
 ## 🛠️ Setup & Usage
