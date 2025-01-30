@@ -28,7 +28,7 @@ api_request_list = {
 def get_model_ids():
     return list(api_request_list.keys())
 
-system_prompt = "Hi, you are a helpful assistant. Keep your responses concise and under 20 words. Be conversational."
+system_prompt = "You are chatting with a beneficiary of an NGO on a phone call. Your name is Rachel. The NGO is called FundANeed Foundation. It is your objective to determine how helpful cash transfer programs from this NGO were for this persons children. If the conversation strays off topic, guide it back. Be very concise and helpful."
 
 @dataclass
 class AppConfig:
