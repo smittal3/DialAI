@@ -12,10 +12,10 @@ class VoiceDetection:
                  silence_indicator: threading.Event,
                  user_interrupt: threading.Event,
                  sample_rate: int = 16000,
-                 threshold: int = 0.5):
-        
+                 threshold: int = 0.4):
+    
         self.input_queue = input_queue
-        self.output_queue = output_queue
+        #self.output_queue = output_queue
         self.vad_to_transcribe = vad_to_transcribe
         self.sample_rate = sample_rate
         self.threshold = threshold
@@ -70,16 +70,21 @@ class VoiceDetection:
 
         while not self.should_stop:
             try:
+                # Chunks are currently 640 bytes each
                 chunk = self.input_queue.get(timeout=1)
                 # print(f"[VAD] Received audio chunk of size: {len(chunk)}")
                 byte_buffer.extend(chunk)
+                # chunk should now be 1/2 of previous size, each byte pair is one sample
                 chunk = np.frombuffer(chunk, dtype=np.int16)
                 audio_buffer = np.concatenate([audio_buffer, chunk])
 
+                # normalize to -1.0 to 1.0
                 chunk = chunk.astype(np.float32) / 32768.0
                 audio_buffer_normalized = np.concatenate([audio_buffer_normalized, chunk])
                 
+                # Process complete windows (512 samples at 16000 Hz)
                 while len(audio_buffer_normalized) >= self.window_size:
+                    # Get window and update buffer
                     window_normalized = audio_buffer_normalized[:self.window_size]
                     audio_buffer_normalized = audio_buffer_normalized[self.window_size:]
                     
@@ -99,21 +104,27 @@ class VoiceDetection:
                         self.silence_counter += 1
                    
                     if self.is_speaking:
-                        self.output_queue.put(window_bytes)
+                        # currently outputting window_bytes to create echo server
+                        # otherwise, should be outputting audio_buffer for STT
+                        # self.output_queue.put(window_bytes)
+                        # This is all we need to do
+                        # TO:DO: Remove adding window_bytes to output_queue
                         self.vad_to_transcribe.put(window)
 
                 # only do once
-                if self.speech_samples == self.min_speech_samples:
-                    print("[VAD] Speech detected, clearing silence indicator")
+                if self.speech_samples >= self.min_speech_samples:
                     self.user_interrupt.set()
                     self.silence_indicator.clear()
 
+                # After processing the window, check if we should trigger a silence event
                 if self.is_speaking and self.silence_counter >= self.min_silence_samples:
                     print("[VAD] Silence detected")
                     self.silence_indicator.set()
                     self.user_interrupt.clear()
                     self.speech_samples = 0
                     self.is_speaking = False
+
+             
                     
             except queue.Empty:
                 continue

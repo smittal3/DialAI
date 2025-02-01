@@ -74,6 +74,7 @@ async def handle_websocket():
                 break
     
     async def write_to_websocket():
+        i = 0
         buffer = bytearray()
         while True:
             data = await websocket_streams.dequeue_output_stream()  
@@ -81,20 +82,22 @@ async def handle_websocket():
             # At 16000 Hz, ensure we are sending 640 bytes per packet
             while len(buffer) > 640:
                 data = buffer[:640]
-                buffer = buffer[640:]
+                buffer = buffer[640:]   
                 await websocket.send(data)
-
+                await asyncio.sleep(0.015)
+                i += 1
+            
+            if user_interrupt.is_set():
+                print("User interrupt set, clearing buffer")
+                with websocket_streams.output_stream.mutex:
+                    websocket_streams.output_stream.queue.clear()
+                    
+            if i % 200 == 0:
+                await asyncio.sleep(0.5)
+            
             if system_interrupt.is_set():
                 print("Exiting websocket write")
                 break
-            
-            if user_interrupt.is_set():
-                user_interrupt.clear()
-                out = websocket_streams.output_stream
-                with out.mutex:
-                    out.queue.clear()
-
-            
 
     def signal_handler():
         system_interrupt.set()

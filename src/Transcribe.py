@@ -33,6 +33,7 @@ class TranscribeHandler(TranscriptResultStreamHandler):
         return transcript
 
 
+# Blocks when silent, otherwise triggers transcribe and puts result in output queue to bedrock
 class Transcribe:
     def __init__(self, 
                  audio_queue: queue.Queue,
