@@ -53,7 +53,7 @@ class ConversationController:
                 print("Waiting for bedrock complete")
                 self.bedrock_complete.wait()
                 self.inference.stop()
-                
+
                 print("Waiting for speech complete")
                 self.speech_complete.wait()
                 self.speech_generator.stop()
@@ -70,3 +70,4 @@ class ConversationController:
         self.vad.stop()
         self.transcribe.stop()
         self.inference.stop()
+        self.speech_generator.stop()    

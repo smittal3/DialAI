@@ -44,7 +44,7 @@ class AppConfig:
     system_prompt: str = system_prompt
     polly: dict = field(default_factory=lambda: {
         'engine' : 'neural', 
-        'language' : 'en-US', 
-        'voice' : 'Danielle', 
+        'language' : 'en-IN', 
+        'voice' : 'Kajal', 
         'outputFormat' : 'pcm'
     })

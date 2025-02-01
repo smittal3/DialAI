@@ -6,12 +6,13 @@ import boto3
 from config import AppConfig, api_request_list
 from typing import Optional
 from botocore.config import Config
+from Logger import Logger, LogComponent
 
 class LLMInference:
     def __init__(self, config, user_interrupt, bedrock_context, bedrock_complete, transcribe_to_bedrock, bedrock_to_stt):
         bedrock_config = Config(
-        read_timeout=30,
-        retries={'max_attempts': 2}
+            read_timeout=30,
+            retries={'max_attempts': 2}
         )
         self.client = boto3.client('bedrock-runtime', config=bedrock_config, region_name=config.aws_region)
         self.config = config
@@ -22,6 +23,8 @@ class LLMInference:
         self.bedrock_to_stt = bedrock_to_stt
         self.thread: Optional[threading.Thread] = None
         self.is_running = True
+        self.logger = Logger()
+        self.logger.info(LogComponent.INFERENCE, "LLM Inference initialized")
 
     def start(self):
         if self.thread is not None and self.thread.is_alive():
@@ -31,10 +34,11 @@ class LLMInference:
 
         self.thread = threading.Thread(target=run_async_inference)
         self.thread.start()
+        self.logger.info(LogComponent.INFERENCE, "Inference thread started")
 
     def stop(self):
         if self.thread is not None:
-            print("Stopping bedrock thread")
+            self.logger.info(LogComponent.INFERENCE, "Stopping inference thread")
             self.is_running = False
             self.thread.join()
             self.thread = None
@@ -44,6 +48,7 @@ class LLMInference:
             text = self.transcribe_to_bedrock.get(timeout=3)
             self.context.add_user_input(text)
             body = self.define_body(text)
+            self.logger.debug(LogComponent.INFERENCE, f"Sending request to Bedrock with text: {body['prompt']}")
 
             body_json = json.dumps(body)
             model_params = api_request_list[self.config.model_id]
@@ -61,22 +66,21 @@ class LLMInference:
                 if self.user_interrupt.is_set():
                     with self.bedrock_to_stt.mutex:
                         self.bedrock_to_stt.queue.clear()
-                    print("\nInference interrupted!")
+                    self.logger.warning(LogComponent.INFERENCE, "Inference interrupted by user")
                     break
             
             # Store whatever has already been output
             self.context.add_bedrock_output(full_response)
-            print(f"Bedrock output: {full_response}")
+            self.logger.info(LogComponent.INFERENCE, f"Complete response: {full_response}")
                 
             self.bedrock_complete.set()
         except queue.Empty:
-            print("No text to send to bedrock")
+            self.logger.warning(LogComponent.INFERENCE, "No text received from transcription")
             self.bedrock_complete.set()
                 
         except Exception as e: 
-            print(f"Bedrock Error {e}")
+            self.logger.error(LogComponent.INFERENCE, f"Bedrock Error: {e}")
             return "no response, error"
-
     
     def define_body(self, text):
         body = api_request_list[self.config.model_id]['body']
@@ -85,6 +89,7 @@ class LLMInference:
   
     async def process_stream(self, bedrock_stream):
         buffer = ''
+        punctuation = '.,!?|'
         
         if bedrock_stream:
             for event in bedrock_stream:
@@ -94,32 +99,38 @@ class LLMInference:
                     text = chunk_obj['generation']
                     buffer += text
                 
-                # Stream out complete sentences
-                while '.' in buffer:
-                    sentence, buffer = buffer.split('.', 1)
-                    yield sentence + '.'
+                # Stream out complete sentences on any punctuation
+                for punct in punctuation:
+                    while punct in buffer:
+                        sentence, buffer = buffer.split(punct, 1)
+                        yield sentence + punct
                         
             # Yield any remaining text in buffer
             if buffer:
-                yield buffer + ('.' if not buffer.endswith('.') else '')
+                # Add appropriate punctuation if missing
+                if not any(buffer.endswith(p) for p in punctuation):
+                    buffer += '.'
+                yield buffer
 
 
 class BedrockContext: 
-  def __init__(self, config):
-    self.history = []
-    self.formatted_context= f"<|begin_of_text|><|start_header_id|>system \
+    def __init__(self, config):
+        self.history = []
+        self.formatted_context = f"<|begin_of_text|><|start_header_id|>system \
                               <|end_header_id|>\n\n{config.system_prompt}<|eot_id|>\n"
+        self.logger = Logger()
+        self.logger.debug(LogComponent.INFERENCE, "BedrockContext initialized")
   
-  def add_user_input(self, user_input):
-    self.history.append({"role":"user", "message": user_input})
+    def add_user_input(self, user_input):
+        self.history.append({"role":"user", "message": user_input})
+        
+        user_turn = f"<|start_header_id|>user<|end_header_id|>\n\n{user_input}<|eot_id|>"
+        partial_model_tag = f"<|start_header_id|>assistant<|end_header_id|>"
+        self.formatted_context += f"{user_turn}\n{partial_model_tag}\n"
     
-    user_turn = f"<|start_header_id|>user<|end_header_id|>\n\n{user_input}<|eot_id|>"
-    partial_model_tag = f"<|start_header_id|>assistant<|end_header_id|>"
-    self.formatted_context += f"{user_turn}\n{partial_model_tag}\n"
-    
-  def add_bedrock_output(self, bedrock_output):
-    self.history.append({"role":"assistant", "message": bedrock_output})
-    self.formatted_context += f"\n{bedrock_output}<|eot_id|>\n"
+    def add_bedrock_output(self, bedrock_output):
+        self.history.append({"role":"assistant", "message": bedrock_output})
+        self.formatted_context += f"\n{bedrock_output}<|eot_id|>\n"
   
-  def get_context(self):
-    return self.formatted_context
+    def get_context(self):
+        return self.formatted_context
