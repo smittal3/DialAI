@@ -28,8 +28,8 @@ class ConversationController:
         self.vad = VoiceDetection(websocket_streams.input_stream, websocket_streams.output_stream,
                                   self.vad_to_transcribe, self.silence_indicator, self.user_interrupt)
 
-        self.transcribe = Transcribe(websocket_streams.input_stream, self.vad_to_transcribe, self.transcribe_to_bedrock, 
-                                    self.user_interrupt, self.silence_indicator, self.system_interrupt, self.config)
+        self.transcribe = Transcribe(self.vad_to_transcribe, self.transcribe_to_bedrock, self.user_interrupt, 
+                                     self.silence_indicator, self.system_interrupt, self.config)
         
         self.inference = LLMInference(self.config, self.user_interrupt, self.context, self.bedrock_complete, 
                                       self.transcribe_to_bedrock, self.bedrock_to_stt)

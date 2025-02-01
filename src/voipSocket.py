@@ -3,8 +3,7 @@ import json
 import queue
 import threading
 import signal
-from quart import Quart, websocket, request, Response, copy_current_websocket_context
-# from main import ConversationManager
+from quart import Quart, websocket, request, Response
 from config import AppConfig, api_request_list
 from Orchestrate import ConversationController
 from Logger import Logger, LogComponent
@@ -134,7 +133,6 @@ async def handle_websocket():
             loop.run_in_executor(None, controller.start_conversation)
         )
     finally:
-        # conversation.is_running = False
         read_audio_task.cancel()
         write_audio_task.cancel()
     

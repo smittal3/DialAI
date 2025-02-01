@@ -80,7 +80,6 @@ class LLMInference:
                 
         except Exception as e: 
             self.logger.error(LogComponent.INFERENCE, f"Bedrock Error: {e}")
-            return "no response, error"
     
     def define_body(self, text):
         body = api_request_list[self.config.model_id]['body']

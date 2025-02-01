@@ -32,7 +32,6 @@ class TranscribeHandler(TranscriptResultStreamHandler):
 # Blocks when silent, otherwise triggers transcribe and puts result in output queue to bedrock
 class Transcribe:
     def __init__(self, 
-                 audio_queue: queue.Queue,
                  vad_to_transcribe: queue.Queue,
                  transcribe_to_bedrock: queue.Queue,
                  user_interrupt: threading.Event,
@@ -40,7 +39,6 @@ class Transcribe:
                  system_interrupt: threading.Event,
                  config: AppConfig):
 
-        self.audio_queue = audio_queue
         self.vad_to_transcribe = vad_to_transcribe
         self.transcribe_to_bedrock = transcribe_to_bedrock
         self.config = config
