@@ -8,6 +8,7 @@ from amazon_transcribe.client import TranscribeStreamingClient
 from amazon_transcribe.handlers import TranscriptResultStreamHandler
 from amazon_transcribe.model import TranscriptEvent
 from Logger import Logger, LogComponent
+from Metrics import Metrics, MetricType
 
 class TranscribeHandler(TranscriptResultStreamHandler):
     def __init__(self,
@@ -15,10 +16,15 @@ class TranscribeHandler(TranscriptResultStreamHandler):
                  **kwargs):
         super().__init__(*args, **kwargs)
         self.transcript_buffer = []
+        self.metrics = Metrics()
+        self.first_chunk = True
 
     async def handle_transcript_event(self, transcript_event: TranscriptEvent):
         results = transcript_event.transcript.results
         for result in results:
+            if self.first_chunk:
+                self.metrics.record_time_to_first_token("transcribe_stream", "transcribe_first_token")
+                self.first_chunk = False
             if not result.is_partial:
                 transcript = result.alternatives[0].transcript
                 self.transcript_buffer.append(transcript)
@@ -48,6 +54,7 @@ class Transcribe:
         self.thread: Optional[threading.Thread] = None
         self.is_running = True
         self.logger = Logger()
+        self.metrics = Metrics()
         
         # Initialize AWS client
         self.logger.info(LogComponent.TRANSCRIBE, f"Initializing AWS Transcribe client for region {config.aws_region}")
@@ -60,6 +67,7 @@ class Transcribe:
             asyncio.run(self._transcribe_stream())
 
         self.thread = threading.Thread(target=run_async_transcribe)
+        self.metrics.start_metric(MetricType.THREAD_LIFETIME, "transcribe_thread")
         self.thread.start()
         self.logger.info(LogComponent.TRANSCRIBE, "Transcription thread started")
 
@@ -68,6 +76,7 @@ class Transcribe:
             self.logger.info(LogComponent.TRANSCRIBE, "Stopping transcription thread")
             self.is_running = False
             self.thread.join()
+            self.metrics.end_metric(MetricType.THREAD_LIFETIME, "transcribe_thread")
             self.thread = None
 
     async def _transcribe_stream(self):
@@ -83,6 +92,7 @@ class Transcribe:
                     break
                     
                 self.logger.info(LogComponent.TRANSCRIBE, "Starting AWS stream transcription")
+                self.metrics.start_metric(MetricType.API_LATENCY, "transcribe_stream")
                 stream = await self.client.start_stream_transcription(
                     language_code="en-IN",
                     media_sample_rate_hz=self.config.sample_rate,
@@ -114,6 +124,7 @@ class Transcribe:
                 if final_transcript:
                     self.logger.info(LogComponent.TRANSCRIBE, f"Final transcript: {final_transcript}")
                     self.transcribe_to_bedrock.put(final_transcript)             
+                    self.metrics.end_metric(MetricType.API_LATENCY, "transcribe_stream")
 
             except (BotoCoreError, ClientError) as e:
                 self.logger.error(LogComponent.TRANSCRIBE, f"AWS Transcribe error: {e}")

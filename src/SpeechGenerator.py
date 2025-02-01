@@ -8,6 +8,7 @@ from config import AppConfig, api_request_list
 from typing import Optional
 from botocore.config import Config
 from Logger import Logger, LogComponent
+from Metrics import Metrics, MetricType
 
 
 class SpeechGenerator:
@@ -21,6 +22,7 @@ class SpeechGenerator:
         self.thread: Optional[threading.Thread] = None
         self.is_running = True
         self.logger = Logger()
+        self.metrics = Metrics()
         self.logger.info(LogComponent.SPEECH, f"Initializing Polly client for region {config.aws_region}")
         self.polly = boto3.client('polly', region_name=config.aws_region)
         self.chunk_size = 640
@@ -31,6 +33,7 @@ class SpeechGenerator:
 
         self.is_running = True
         self.thread = threading.Thread(target=self._generate_audio)
+        self.metrics.start_metric(MetricType.THREAD_LIFETIME, "speech_thread")
         self.thread.start()
         self.logger.info(LogComponent.SPEECH, "Speech generation thread started")
 
@@ -39,9 +42,11 @@ class SpeechGenerator:
             self.logger.info(LogComponent.SPEECH, "Stopping speech generator thread")
             self.is_running = False
             self.thread.join()
+            self.metrics.end_metric(MetricType.THREAD_LIFETIME, "speech_thread")
             self.thread = None
 
     def _generate_audio(self):
+        first_chunk = True
         while self.is_running:
             try:
                 if self.user_interrupt.is_set():
@@ -54,7 +59,7 @@ class SpeechGenerator:
                 text = self.bedrock_to_stt.get(timeout=0.1)
                 if text:
                     self.logger.debug(LogComponent.SPEECH, f"Generating speech for text: {text}")
-                    start_time = time.time()
+                    self.metrics.start_metric(MetricType.API_LATENCY, "polly_synthesis")
                     response = self.polly.synthesize_speech(
                         Text=text,
                         Engine=self.config.polly['engine'],
@@ -62,8 +67,10 @@ class SpeechGenerator:
                         VoiceId=self.config.polly['voice'],
                         OutputFormat=self.config.polly['outputFormat']
                     )
-                    overall_time = time.time() - start_time
-                    self.logger.debug(LogComponent.SPEECH, f"Polly response received in {overall_time:.2f} seconds")
+                    if first_chunk:
+                        self.metrics.record_time_to_first_token("polly_synthesis", "polly_first_token")
+                        first_chunk = False
+                    self.metrics.end_metric(MetricType.API_LATENCY, "polly_synthesis")
                     
                     stream = response['AudioStream']
                     while True:

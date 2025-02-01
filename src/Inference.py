@@ -7,6 +7,7 @@ from config import AppConfig, api_request_list
 from typing import Optional
 from botocore.config import Config
 from Logger import Logger, LogComponent
+from Metrics import Metrics, MetricType
 
 class LLMInference:
     def __init__(self, config, user_interrupt, bedrock_context, bedrock_complete, transcribe_to_bedrock, bedrock_to_stt):
@@ -24,6 +25,7 @@ class LLMInference:
         self.thread: Optional[threading.Thread] = None
         self.is_running = True
         self.logger = Logger()
+        self.metrics = Metrics()
         self.logger.info(LogComponent.INFERENCE, "LLM Inference initialized")
 
     def start(self):
@@ -33,6 +35,7 @@ class LLMInference:
             asyncio.run(self._get_response())
 
         self.thread = threading.Thread(target=run_async_inference)
+        self.metrics.start_metric(MetricType.THREAD_LIFETIME, "inference_thread")
         self.thread.start()
         self.logger.info(LogComponent.INFERENCE, "Inference thread started")
 
@@ -41,6 +44,7 @@ class LLMInference:
             self.logger.info(LogComponent.INFERENCE, "Stopping inference thread")
             self.is_running = False
             self.thread.join()
+            self.metrics.end_metric(MetricType.THREAD_LIFETIME, "inference_thread")
             self.thread = None
 
     async def _get_response(self):
@@ -52,15 +56,25 @@ class LLMInference:
 
             body_json = json.dumps(body)
             model_params = api_request_list[self.config.model_id]
+            
+            self.metrics.start_metric(MetricType.API_LATENCY, "bedrock_inference")
             response = self.client.invoke_model_with_response_stream(
                 body=body_json, 
                 modelId=model_params['modelId'], 
                 accept=model_params['accept'], 
                 contentType=model_params['contentType']
             )
+            
             full_response = ""
             bedrock_stream = response.get('body')
+            first_chunk = True
+            
             async for chunk in self.process_stream(bedrock_stream):
+                if first_chunk:
+                    # Record time to first token
+                    self.metrics.record_time_to_first_token("bedrock_inference", "bedrock_first_token")
+                    first_chunk = False
+                
                 full_response += chunk
                 self.bedrock_to_stt.put(chunk)
                 if self.user_interrupt.is_set():
@@ -72,6 +86,7 @@ class LLMInference:
             # Store whatever has already been output
             self.context.add_bedrock_output(full_response)
             self.logger.info(LogComponent.INFERENCE, f"Complete response: {full_response}")
+            self.metrics.end_metric(MetricType.API_LATENCY, "bedrock_inference")
                 
             self.bedrock_complete.set()
         except queue.Empty:
