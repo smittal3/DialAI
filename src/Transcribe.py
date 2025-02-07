@@ -18,13 +18,20 @@ class TranscribeHandler(TranscriptResultStreamHandler):
         self.transcript_buffer = []
         self.metrics = Metrics()
         self.first_chunk = True
+        self.second_chunk = False
 
     async def handle_transcript_event(self, transcript_event: TranscriptEvent):
+        if self.first_chunk:
+            self.metrics.record_time_to_first_token("transcribe_stream", "transcribe_first_token")
+            self.first_chunk = False
+            self.second_chunk = True
+            self.metrics.start_metric(MetricType.SPEECH_PROCESSING, "first_to_second_chunk_transcribe_stream")
+        if self.second_chunk:
+            self.metrics.end_metric(MetricType.SPEECH_PROCESSING, "first_to_second_chunk_transcribe_stream")
+            self.second_chunk = False
+
         results = transcript_event.transcript.results
         for result in results:
-            if self.first_chunk:
-                self.metrics.record_time_to_first_token("transcribe_stream", "transcribe_first_token")
-                self.first_chunk = False
             if not result.is_partial:
                 transcript = result.alternatives[0].transcript
                 self.transcript_buffer.append(transcript)
@@ -83,29 +90,38 @@ class Transcribe:
         while self.is_running:
             try:
                 self.logger.debug(LogComponent.TRANSCRIBE, "Waiting for silence indicator to clear")
+
                 while self.silence_indicator.is_set():
                     if self.system_interrupt.is_set():
                         break
-                    await asyncio.sleep(0.2)
+                    await asyncio.sleep(0.1)
 
                 if self.system_interrupt.is_set():
                     break
+
                     
                 self.logger.info(LogComponent.TRANSCRIBE, "Starting AWS stream transcription")
-                self.metrics.start_metric(MetricType.API_LATENCY, "transcribe_stream")
+                self.metrics.start_metric(MetricType.TRANSCRIPTION, "initializing_transcribe_stream")
                 stream = await self.client.start_stream_transcription(
-                    language_code="en-IN",
+                    language_code="en-US",
                     media_sample_rate_hz=self.config.sample_rate,
                     media_encoding="pcm"
                 )
+
+                self.metrics.end_metric(MetricType.TRANSCRIPTION, "initializing_transcribe_stream")
                 
                 handler = TranscribeHandler(stream.output_stream)
                 stream.handler = handler
 
                 async def send_audio_events():
+                    first_chunk = True
                     while True:
-                        try:
-                            data = self.vad_to_transcribe.get(timeout=0.2)
+                        try:    
+                            data = self.vad_to_transcribe.get(timeout=0.01)
+                            if first_chunk:
+                                self.metrics.start_metric(MetricType.API_LATENCY, "transcribe_stream")
+                                self.metrics.end_metric(MetricType.TRANSCRIPTION, "first_chunk_vad_to_transcribe")
+                                first_chunk = False
                             await stream.input_stream.send_audio_event(audio_chunk=data.tobytes())
                         except queue.Empty:
                             if self.silence_indicator.is_set():
@@ -130,4 +146,5 @@ class Transcribe:
                 self.logger.error(LogComponent.TRANSCRIBE, f"AWS Transcribe error: {e}")
             except Exception as e:
                 self.logger.error(LogComponent.TRANSCRIBE, f"Unexpected error: {e}")
-            
+        
+        

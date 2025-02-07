@@ -13,6 +13,19 @@ class LogComponent(Enum):
     WEBSOCKET = "\033[96m"  # Cyan
     ORCHESTRATOR = "\033[91m"  # Red
     SYSTEM = "\033[97m"  # White
+    DATABASE = "\033[90m"  # Gray
+
+class ColoredFormatter(logging.Formatter):
+    def format(self, record):
+        if hasattr(record, 'component'):
+            record.msg = f"{record.component.value} {record.msg}\033[0m"
+        return super().format(record)
+
+class PlainFormatter(logging.Formatter):
+    def format(self, record):
+        if hasattr(record, 'component'):
+            record.msg = f"[{record.component.name}] {record.msg}"
+        return super().format(record)
 
 class Logger:
     _instance = None
@@ -46,36 +59,36 @@ class Logger:
         self.logger = logging.getLogger('DialAI')
         self.logger.setLevel(logging.DEBUG)
 
-        # File handler
+        # File handler - without colors
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.DEBUG)
-        file_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        file_formatter = PlainFormatter('%(asctime)s - %(levelname)s - %(message)s')
         file_handler.setFormatter(file_formatter)
 
         # Console handler with colors
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.INFO)
-        console_formatter = logging.Formatter('%(message)s')
+        console_formatter = ColoredFormatter('%(message)s')
         console_handler.setFormatter(console_formatter)
 
         self.logger.addHandler(file_handler)
         self.logger.addHandler(console_handler)
 
-    def _format_message(self, component: LogComponent, message: str) -> str:
-        return f"{component.value}[{component.name}] {message}\033[0m"
+    def _log(self, level: int, component: LogComponent, message: str):
+        record = logging.LogRecord(
+            'DialAI', level, '', 0, message, (), None
+        )
+        record.component = component
+        self.logger.handle(record)
 
     def info(self, component: LogComponent, message: str):
-        formatted_message = self._format_message(component, message)
-        self.logger.info(formatted_message)
+        self._log(logging.INFO, component, message)
 
     def debug(self, component: LogComponent, message: str):
-        formatted_message = self._format_message(component, message)
-        self.logger.debug(formatted_message)
+        self._log(logging.DEBUG, component, message)
 
     def error(self, component: LogComponent, message: str):
-        formatted_message = self._format_message(component, message)
-        self.logger.error(formatted_message)
+        self._log(logging.ERROR, component, message)
 
     def warning(self, component: LogComponent, message: str):
-        formatted_message = self._format_message(component, message)
-        self.logger.warning(formatted_message) 
+        self._log(logging.WARNING, component, message) 

@@ -1,6 +1,6 @@
 import time
 import threading
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 from enum import Enum
 from dataclasses import dataclass
 from Logger import Logger, LogComponent
@@ -110,4 +110,67 @@ class Metrics:
                 self._metrics[metric_type].clear()
             else:
                 for metric_dict in self._metrics.values():
-                    metric_dict.clear() 
+                    metric_dict.clear()
+
+    def get_streaming_metrics_summary(self) -> None:
+        """Get a summary of streaming metrics for all services."""
+        with self._lock:
+            # Get all first token metrics
+            first_token_metrics = {
+                identifier: entry.duration
+                for identifier, entry in self._metrics[MetricType.TIME_TO_FIRST_TOKEN].items()
+                if entry.duration is not None
+            }
+            
+            # Group by service
+            service_metrics = {
+                'transcribe': [],
+                'bedrock': [],
+                'polly': []
+            }
+            
+            for identifier, duration in first_token_metrics.items():
+                if 'transcribe' in identifier:
+                    service_metrics['transcribe'].append(duration)
+                elif 'bedrock' in identifier:
+                    service_metrics['bedrock'].append(duration)
+                elif 'polly' in identifier:
+                    service_metrics['polly'].append(duration)
+            
+            # Log summary for each service
+            for service, durations in service_metrics.items():
+                if durations:
+                    avg = sum(durations) / len(durations)
+                    min_time = min(durations)
+                    max_time = max(durations)
+                    self.logger.info(
+                        LogComponent.SYSTEM,
+                        f"{service} streaming metrics summary:\n"
+                        f"  Average time to first token: {avg:.3f}s\n"
+                        f"  Best time to first token: {min_time:.3f}s\n"
+                        f"  Worst time to first token: {max_time:.3f}s\n"
+                        f"  Sample size: {len(durations)}"
+                    )
+
+    def get_service_first_token_metrics(self, service: str) -> Tuple[Optional[float], Optional[float]]:
+        """Get the latest and average time to first token for a specific service.
+        
+        Args:
+            service: The service name ('transcribe', 'bedrock', or 'polly')
+            
+        Returns:
+            Tuple of (latest_time, average_time)
+        """
+        with self._lock:
+            service_metrics = [
+                entry.duration
+                for identifier, entry in self._metrics[MetricType.TIME_TO_FIRST_TOKEN].items()
+                if service in identifier and entry.duration is not None
+            ]
+            
+            if not service_metrics:
+                return None, None
+                
+            latest = service_metrics[-1]  # Last recorded metric
+            average = sum(service_metrics) / len(service_metrics)
+            return latest, average 

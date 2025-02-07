@@ -7,7 +7,7 @@ from quart import Quart, websocket, request, Response
 from config import AppConfig, api_request_list
 from Orchestrate import ConversationController
 from Logger import Logger, LogComponent
-
+from Metrics import Metrics, MetricType
 app = Quart(__name__)
 logger = Logger()
 
@@ -31,7 +31,7 @@ class WebsocketStreams:
                 data = self.input_stream.get_nowait()
                 return data
             except queue.Empty:
-                await asyncio.sleep(0.2)
+                await asyncio.sleep(0.05)
 
     async def enqueue_output_stream(self, audio_bytes):
         try:
@@ -46,7 +46,7 @@ class WebsocketStreams:
                 data = self.output_stream.get_nowait()
                 return data
             except queue.Empty:
-                await asyncio.sleep(0.2)
+                await asyncio.sleep(0.05)
     
     
 @app.websocket("/socket")
@@ -59,11 +59,12 @@ async def handle_websocket():
     websocket_streams = WebsocketStreams()
     system_interrupt = threading.Event()
     user_interrupt = threading.Event()
+    metrics = Metrics()
 
     config = AppConfig(
         aws_region="us-west-2",
         model_id="meta.llama3-1-70b-instruct-v1:0",
-        language_code="en-IN"
+        language_code="en-US"
     )
 
     # Create conversation controller
@@ -78,12 +79,18 @@ async def handle_websocket():
                 break
     
     async def write_to_websocket():
-        i = 0
+        first_chunk = True
+        i = 1
         buffer = bytearray()
         while True:
             try:
                 data = await websocket_streams.dequeue_output_stream()  
                 buffer.extend(data)
+                if first_chunk:
+                    metrics.end_metric(MetricType.SPEECH_PROCESSING, "first_chunk_to_output_stream")
+                    metrics.end_metric(MetricType.THREAD_LIFETIME, "*****response_time_from_silence*****")
+                    first_chunk = False
+
                 # At 16000 Hz, ensure we are sending 640 bytes per packet
                 while len(buffer) > 640:
                     data = buffer[:640]
@@ -95,6 +102,7 @@ async def handle_websocket():
                     logger.info(LogComponent.WEBSOCKET, "User interrupt set, clearing buffer")
                     with websocket_streams.output_stream.mutex:
                         websocket_streams.output_stream.queue.clear()
+                        buffer = bytearray()
                         
                 if i % 200 == 0:
                     logger.debug(LogComponent.WEBSOCKET, f"Sent {i} packets")
@@ -135,6 +143,7 @@ async def handle_websocket():
     finally:
         read_audio_task.cancel()
         write_audio_task.cancel()
+        controller.stop_conversation()
     
     
 @app.route("/webhooks/events", methods=["POST", "GET"])

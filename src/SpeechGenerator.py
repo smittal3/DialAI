@@ -56,8 +56,11 @@ class SpeechGenerator:
                         self.output_stream.queue.clear()
                     break
 
-                text = self.bedrock_to_stt.get(timeout=0.1)
+                text = self.bedrock_to_stt.get(timeout=0.01)
                 if text:
+                    if first_chunk:
+                        self.metrics.end_metric(MetricType.SPEECH_PROCESSING, "first_chunk_bedrock_to_stt")
+
                     self.logger.debug(LogComponent.SPEECH, f"Generating speech for text: {text}")
                     self.metrics.start_metric(MetricType.API_LATENCY, "polly_synthesis")
                     response = self.polly.synthesize_speech(
@@ -67,9 +70,9 @@ class SpeechGenerator:
                         VoiceId=self.config.polly['voice'],
                         OutputFormat=self.config.polly['outputFormat']
                     )
+
                     if first_chunk:
                         self.metrics.record_time_to_first_token("polly_synthesis", "polly_first_token")
-                        first_chunk = False
                     self.metrics.end_metric(MetricType.API_LATENCY, "polly_synthesis")
                     
                     stream = response['AudioStream']
@@ -77,7 +80,9 @@ class SpeechGenerator:
                         audio_chunk = stream.read(self.chunk_size)
                         if not audio_chunk or self.user_interrupt.is_set():
                             break
-
+                        if first_chunk:
+                            self.metrics.start_metric(MetricType.SPEECH_PROCESSING, "first_chunk_to_output_stream")
+                            first_chunk = False
                         self.output_stream.put(audio_chunk)
                        
             except queue.Empty:    

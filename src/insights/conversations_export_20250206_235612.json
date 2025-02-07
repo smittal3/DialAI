@@ -1,0 +1,604 @@
+{
+  "metadata": {
+    "export_time": "2025-02-06T23:56:12.162637",
+    "total_conversations": 14
+  },
+  "conversations": [
+    {
+      "id": 2,
+      "start_time": "2025-02-04T21:27:36.370177",
+      "end_time": "2025-02-04T21:28:32.968146",
+      "duration_seconds": 56,
+      "conversation_history": [
+        {
+          "role": "assistant",
+          "message": "Hello! I'm calling on behalf of FundANeed Foundation. Is this Mrs. Sharma?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, this is Priya Sharma speaking."
+        },
+        {
+          "role": "assistant",
+          "message": "Thank you Mrs. Sharma. I understand you received financial support from FundANeed Foundation last month. Could you confirm this?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, that's correct. We received Rs. 50,000 to help with my daughter's college fees at Delhi University."
+        },
+        {
+          "role": "assistant",
+          "message": "Thank you for confirming. Could you tell me how helpful these funds were and what specific expenses they covered?"
+        },
+        {
+          "role": "user",
+          "message": "The funds were extremely helpful. My husband's small business was affected during COVID, and we were struggling with our savings. The money helped cover my daughter's first semester fees and her hostel deposit. She's studying B.Tech in Computer Science."
+        },
+        {
+          "role": "assistant",
+          "message": "I'm glad to hear the funds were helpful. Is there any other way FundANeed could have supported you and your family?"
+        },
+        {
+          "role": "user",
+          "message": "Well, it would have been helpful if they could provide some guidance about other scholarship opportunities or maybe some career counseling services for students. Many families like us are new to the college admission process."
+        },
+        {
+          "role": "assistant",
+          "message": "That's valuable feedback. Lastly, do you have any other suggestions or feedback for FundANeed Foundation?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, the process was good, but it would be better if the application process was available in Hindi as well. Also, maybe they could create a WhatsApp group for beneficiaries to share information and opportunities. Otherwise, I'm very grateful for their support."
+        },
+        {
+          "role": "assistant",
+          "message": "Thank you so much for your time and detailed feedback, Mrs. Sharma. This will help us improve our services. Have a good day!"
+        },
+        {
+          "role": "user",
+          "message": "Thank you, you too. Goodbye."
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "start_time": "2025-02-04T21:27:36.370177",
+      "end_time": "2025-02-04T21:28:32.968146",
+      "duration_seconds": 56,
+      "conversation_history": [
+        {
+          "role": "user",
+          "message": "Hi, can you hear me?"
+        },
+        {
+          "role": "assistant",
+          "message": "Yes, I can hear you clearly. My name is Rachel, and I'm calling from the FundANeed Foundation. How are you today?"
+        },
+        {
+          "role": "user",
+          "message": "What is this about?"
+        },
+        {
+          "role": "assistant",
+          "message": "We're conducting a follow-up to see how our cash transfer program has been helping the families we support. You've been a beneficiary of our program, and we're interested in hearing about your experience, specifically how it has impacted your children. Can you tell me a little bit about that?"
+        },
+        {
+          "role": "user",
+          "message": "Good and I appreciated the money but I could use some more."
+        },
+        {
+          "role": "assistant",
+          "message": "I'm glad to hear that the cash transfer was helpful. However, I'd like to focus on the impact it had on your children. Can you tell me specifically how the money helped them? For example, were you able to buy them food, clothes, or pay for their education?"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "start_time": "2025-02-04T17:25:12.345678",
+      "end_time": "2025-02-04T17:26:45.678901",
+      "duration_seconds": 93,
+      "conversation_history": [
+        {
+          "role": "assistant",
+          "message": "Hello, I'm calling from FundANeed Foundation. Is this Mrs. Rebecca Thomas?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, speaking."
+        },
+        {
+          "role": "assistant",
+          "message": "Could you confirm receiving educational support from FundANeed?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, we received Rs. 45,000 for my son's diploma course in hotel management."
+        },
+        {
+          "role": "assistant",
+          "message": "How helpful were these funds?"
+        },
+        {
+          "role": "user",
+          "message": "The funds were crucial. After losing my husband last year, continuing my son's education was challenging. This support came at the right time."
+        },
+        {
+          "role": "assistant",
+          "message": "Is there any other way we could have supported you?"
+        },
+        {
+          "role": "user",
+          "message": "Maybe some career counseling services? And information about job placements in the hospitality industry would be helpful."
+        },
+        {
+          "role": "assistant",
+          "message": "Thank you. Any other feedback for FundANeed?"
+        },
+        {
+          "role": "user",
+          "message": "The foundation gave us hope during a difficult time. Just continue supporting students from all fields, not just engineering and medical."
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "start_time": "2025-02-04T16:45:12.334567",
+      "end_time": "2025-02-04T16:46:32.112345",
+      "duration_seconds": 80,
+      "conversation_history": [
+        {
+          "role": "assistant",
+          "message": "Hello, I'm calling from FundANeed Foundation. Is this Mr. Joshi?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, speaking."
+        },
+        {
+          "role": "assistant",
+          "message": "Could you confirm receiving educational support from FundANeed Foundation recently?"
+        },
+        {
+          "role": "user",
+          "message": "Support? When was this given?"
+        },
+        {
+          "role": "assistant",
+          "message": "According to our records, a grant of Rs. 45,000 was disbursed last month for your son's engineering college fees."
+        },
+        {
+          "role": "user",
+          "message": "There must be some mistake. My son completed engineering three years ago. He's working now."
+        },
+        {
+          "role": "assistant",
+          "message": "I see. Our records show an application was processed with your Aadhaar number and address proof last month."
+        },
+        {
+          "role": "user",
+          "message": "What? I never applied recently. Someone must have misused my documents. Last year during a job application I had submitted some documents to a consultancy... Could you tell me when exactly this application was made?"
+        },
+        {
+          "role": "assistant",
+          "message": "This is concerning. Could you confirm your Aadhaar number last 4 digits to verify?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, it's 4832. Please look into this. I'm worried someone is misusing my identity."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "start_time": "2025-02-04T16:20:34.567890",
+      "end_time": "2025-02-04T16:21:59.123456",
+      "duration_seconds": 85,
+      "conversation_history": [
+        {
+          "role": "assistant",
+          "message": "Hello, I'm calling from FundANeed Foundation. Is this Mr. Kumar?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, Suresh Kumar speaking."
+        },
+        {
+          "role": "assistant",
+          "message": "Regarding the educational support you received, could you confirm the amount?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, Rs. 55,000 for my daughter's medical entrance exam coaching."
+        },
+        {
+          "role": "assistant",
+          "message": "How helpful were these funds?"
+        },
+        {
+          "role": "user",
+          "message": "To be honest, I'm disappointed. The funds came two months late, and we had to borrow money initially. The coaching institute almost cancelled her admission."
+        },
+        {
+          "role": "assistant",
+          "message": "I'm sorry to hear that. How could we have helped better?"
+        },
+        {
+          "role": "user",
+          "message": "The foundation needs better planning. They should release funds before the academic year starts. Many families face this issue."
+        },
+        {
+          "role": "assistant",
+          "message": "Any other feedback you'd like to share?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, please make the process faster. Education doesn't wait for funding delays."
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "start_time": "2025-02-04T15:40:23.456789",
+      "end_time": "2025-02-04T15:42:12.345678",
+      "duration_seconds": 109,
+      "conversation_history": [
+        {
+          "role": "assistant",
+          "message": "Hello, I'm calling from FundANeed Foundation. Is this Mrs. Reshma Syed?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, speaking."
+        },
+        {
+          "role": "assistant",
+          "message": "Could you confirm receiving educational support from FundANeed Foundation?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, we received Rs. 35,000 for my daughter's arts college fees."
+        },
+        {
+          "role": "assistant",
+          "message": "How helpful were these funds?"
+        },
+        {
+          "role": "user",
+          "message": "Very helpful! My daughter is pursuing her Bachelor's in Fine Arts. The funds helped us buy her art supplies and pay partial fees. She's doing really well in her courses."
+        },
+        {
+          "role": "assistant",
+          "message": "How else could FundANeed have supported you?"
+        },
+        {
+          "role": "user",
+          "message": "Maybe they could organize art exhibitions or events where students could showcase their work? This could help them build portfolios and maybe even earn some money."
+        },
+        {
+          "role": "assistant",
+          "message": "That's an interesting suggestion. Any other feedback?"
+        },
+        {
+          "role": "user",
+          "message": "Just grateful for supporting arts education. Many think it's not a serious career choice, but FundANeed's support shows otherwise."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "start_time": "2025-02-04T14:32:45.890123",
+      "end_time": "2025-02-04T14:33:15.445789",
+      "duration_seconds": 30,
+      "conversation_history": [
+        {
+          "role": "assistant",
+          "message": "Hello, I'm calling from FundANeed Foundation. Is this Mrs. Lakshmi Venkatesh?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, but I'm in the middle of something important. Can you call later?"
+        },
+        {
+          "role": "assistant",
+          "message": "Of course, when would be a better time to discuss the educational support you received?"
+        },
+        {
+          "role": "user",
+          "message": "Sorry, I'm really busy this week. My daughter has exams. Maybe next week? Thank you, goodbye."
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "start_time": "2025-02-04T14:20:34.567890",
+      "end_time": "2025-02-04T14:22:15.123456",
+      "duration_seconds": 101,
+      "conversation_history": [
+        {
+          "role": "assistant",
+          "message": "Hello, I'm calling from FundANeed Foundation. Is this Mrs. Desai?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, speaking."
+        },
+        {
+          "role": "assistant",
+          "message": "Could you confirm receiving educational support from FundANeed Foundation for your son's coaching?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, but I wanted to talk about this. We received much less than what was approved."
+        },
+        {
+          "role": "assistant",
+          "message": "Could you explain what you mean? Our records show we transferred Rs. 50,000."
+        },
+        {
+          "role": "user",
+          "message": "The local coordinator, Mr. Sinha, said the approved amount was Rs. 50,000 but gave us only Rs. 30,000. He said there were 'processing fees' and 'administrative charges'. Many parents in our coaching center faced the same issue."
+        },
+        {
+          "role": "assistant",
+          "message": "I see. This is concerning. Could you tell me more about these charges?"
+        },
+        {
+          "role": "user",
+          "message": "He said it's normal procedure, but it didn't feel right. He made us sign some papers quickly. Three other families I know had the same experience. We were afraid to complain because we really needed the help."
+        },
+        {
+          "role": "assistant",
+          "message": "Thank you for bringing this to our attention. Would you be comfortable sharing more details about this situation?"
+        },
+        {
+          "role": "user",
+          "message": "I don't want any trouble. Just make sure other families don't face this. Maybe send the money directly to coaching centers or schools?"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "start_time": "2025-02-04T13:25:34.567890",
+      "end_time": "2025-02-04T13:27:15.123456",
+      "duration_seconds": 101,
+      "conversation_history": [
+        {
+          "role": "assistant",
+          "message": "Hello, I'm calling from FundANeed Foundation. Am I speaking with Mr. Reddy?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, but I was about to call your office. None of us have received the funds."
+        },
+        {
+          "role": "assistant",
+          "message": "Could you elaborate? Who do you mean by 'us'?"
+        },
+        {
+          "role": "user",
+          "message": "Everyone who applied through the SMS camp at Krishna Colony last month. At least 15 families I know. We all got approval messages but no money. The school registration deadline is tomorrow."
+        },
+        {
+          "role": "assistant",
+          "message": "I see. Did everyone receive the approval confirmation by SMS?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, we all got messages saying 'Your application is approved' but when we click the link to check status, it shows error. The local coordinator said system is updating but it's been 3 weeks."
+        },
+        {
+          "role": "assistant",
+          "message": "Did anyone from your group receive the funds?"
+        },
+        {
+          "role": "user",
+          "message": "No one. We're all middle-class parents, we don't have extra savings for fees. Some children already missed first week of classes."
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "start_time": "2025-02-04T13:10:56.789012",
+      "end_time": "2025-02-04T13:12:45.678901",
+      "duration_seconds": 109,
+      "conversation_history": [
+        {
+          "role": "assistant",
+          "message": "Hello, I'm calling from FundANeed Foundation. Am I speaking with Ms. Soni?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, this is Anjali Soni."
+        },
+        {
+          "role": "assistant",
+          "message": "Could you confirm receiving educational support from FundANeed?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, we received Rs. 40,000 for my son's special education needs."
+        },
+        {
+          "role": "assistant",
+          "message": "How helpful were these funds? What were you able to do with them?"
+        },
+        {
+          "role": "user",
+          "message": "The funds were very helpful. We used them for his occupational therapy sessions and special education tutor. He's showing good improvement in academics now."
+        },
+        {
+          "role": "assistant",
+          "message": "Is there any other way we could have supported you?"
+        },
+        {
+          "role": "user",
+          "message": "It would be helpful if FundANeed could provide a list of verified special educators and therapists. Finding good professionals is challenging."
+        },
+        {
+          "role": "assistant",
+          "message": "Do you have any other feedback for the foundation?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, please continue supporting special needs education. Many families like us struggle silently. Also, maybe create a parent support group?"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "start_time": "2025-02-04T11:45:12.334567",
+      "end_time": "2025-02-04T11:47:02.112345",
+      "duration_seconds": 110,
+      "conversation_history": [
+        {
+          "role": "assistant",
+          "message": "Hello, I'm calling from FundANeed Foundation. Is this Mrs. Meena Agarwal?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, speaking."
+        },
+        {
+          "role": "assistant",
+          "message": "Could you confirm receiving educational support from FundANeed Foundation?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, we received Rs. 60,000 for my twins' school fees. It was such a blessing!"
+        },
+        {
+          "role": "assistant",
+          "message": "That's wonderful to hear. Could you tell me more about how the funds helped?"
+        },
+        {
+          "role": "user",
+          "message": "After my husband's salary was cut during company restructuring, we were worried about changing the children's school. The grant helped us maintain their education at the same school. Both are in 10th standard, a crucial year."
+        },
+        {
+          "role": "assistant",
+          "message": "Is there any other way FundANeed could have supported you?"
+        },
+        {
+          "role": "user",
+          "message": "Actually, yes. If they could provide some guidance on education loans or scholarships for higher education, it would be helpful. The twins will need that soon."
+        },
+        {
+          "role": "assistant",
+          "message": "Do you have any other feedback for FundANeed Foundation?"
+        },
+        {
+          "role": "user",
+          "message": "The whole process was very smooth and dignified. The staff was very understanding. Just one suggestion - maybe they could have a portal where we can track our application status instead of calling repeatedly."
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "start_time": "2025-02-04T10:05:34.567890",
+      "end_time": "2025-02-04T10:06:04.123456",
+      "duration_seconds": 30,
+      "conversation_history": [
+        {
+          "role": "assistant",
+          "message": "Hello, I'm calling from FundANeed Foundation. Is this Mr. Banerjee?"
+        },
+        {
+          "role": "user",
+          "message": "Wrong number, no Banerjee here."
+        },
+        {
+          "role": "assistant",
+          "message": "I apologize for the inconvenience. Have a good day."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "start_time": "2025-02-04T09:15:23.184567",
+      "end_time": "2025-02-04T09:16:45.223890",
+      "duration_seconds": 82,
+      "conversation_history": [
+        {
+          "role": "assistant",
+          "message": "Hello, I'm calling from FundANeed Foundation. Am I speaking with Mr. Patel?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, this is Rajesh Patel."
+        },
+        {
+          "role": "assistant",
+          "message": "Mr. Patel, I'm calling regarding the educational support you received from FundANeed Foundation. Could you confirm receiving the funds?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, we received Rs. 45,000 for my son's engineering coaching classes."
+        },
+        {
+          "role": "assistant",
+          "message": "How helpful were these funds? What were you able to accomplish with them?"
+        },
+        {
+          "role": "user",
+          "message": "Look, I appreciate the help, but it wasn't enough. The coaching institute costs Rs. 1,20,000 per year. I had to take a loan for the remaining amount. The process took too long as well."
+        },
+        {
+          "role": "assistant",
+          "message": "I understand your concern. How else could FundANeed have supported you better?"
+        },
+        {
+          "role": "user",
+          "message": "They should increase the grant amount. Also, they should have partnerships with coaching institutes for discounted fees. Many families are struggling with these high costs."
+        },
+        {
+          "role": "assistant",
+          "message": "Thank you for this feedback. Is there anything else you'd like to share about your experience?"
+        },
+        {
+          "role": "user",
+          "message": "No, that's all. Please convey this to the management. They need to understand that partial support sometimes puts more stress on families."
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "start_time": "2025-02-04T09:10:23.184567",
+      "end_time": "2025-02-04T09:11:45.223890",
+      "duration_seconds": 82,
+      "conversation_history": [
+        {
+          "role": "assistant",
+          "message": "Hello, I'm calling from FundANeed Foundation. Is this Mrs. Gupta?"
+        },
+        {
+          "role": "user",
+          "message": "Yes, speaking."
+        },
+        {
+          "role": "assistant",
+          "message": "We're following up about the educational support approved for your daughter's college fees. Could you confirm if you received the funds?"
+        },
+        {
+          "role": "user",
+          "message": "No, I haven't received anything yet. I've been checking my account daily. The college is asking for fees next week."
+        },
+        {
+          "role": "assistant",
+          "message": "Our records show the amount was transferred last week to the account ending in 4573."
+        },
+        {
+          "role": "user",
+          "message": "That's my old account. I provided the new account details when the bank merged. I submitted a letter about this change."
+        },
+        {
+          "role": "assistant",
+          "message": "When did you submit this update?"
+        },
+        {
+          "role": "user",
+          "message": "Two months ago at your local office. They said they would update it. I've been trying to call but no one answers. My daughter might lose her seat if we don't pay by next week."
+        }
+      ]
+    }
+  ]
+}

@@ -1,10 +1,13 @@
 import threading
 import queue
 import time
+from datetime import datetime
 from VoiceDetection import VoiceDetection
 from Transcribe import Transcribe
 from Inference import LLMInference, BedrockContext
 from SpeechGenerator import SpeechGenerator
+from Database import Database
+from Metrics import Metrics, MetricType
 
 class ConversationController:
     def __init__(self, websocket_streams, system_interrupt, user_interrupt, config):
@@ -15,7 +18,13 @@ class ConversationController:
         self.speech_complete = threading.Event()
         self.is_running = True
         self.config = config
-
+        self.metrics = Metrics()
+        self.start_time = None
+        self.end_time = None
+        
+        # Initialize database
+        self.database = Database()
+        
         # shared state
         self.vad_to_transcribe = queue.Queue()
         self.transcribe_to_bedrock = queue.Queue()
@@ -39,15 +48,19 @@ class ConversationController:
 
     def start_conversation(self):
         print("Starting conversation in controller")
+        self.start_time = datetime.now()
         try:
             # These two block in silence, one thread over the application
-            self.vad.start()
             self.transcribe.start() 
+            self.vad.start()
             while self.is_running:
                 # Wait for speech, then for silence
                 self.user_interrupt.wait()
+                
+                # Start inference before waiting for silence to save on setup time of stream
                 self.silence_indicator.wait()
                 self.inference.start()
+
                 self.speech_generator.start()
 
                 print("Waiting for bedrock complete")
@@ -67,7 +80,25 @@ class ConversationController:
         print("Stopping conversation in controller")
         self.is_running = False
         self.user_interrupt.set()
+        self.system_interrupt.set()
+        self.silence_indicator.set()
+        self.bedrock_complete.set()
+        self.speech_complete.set()  
+
         self.vad.stop()
         self.transcribe.stop()
         self.inference.stop()
-        self.speech_generator.stop()    
+        self.speech_generator.stop()
+        
+        # Store conversation data
+        self.end_time = datetime.now()
+        try:
+            self.database.store_conversation(
+                self.start_time,
+                self.end_time,
+                self.context.history,
+            )
+        except Exception as e:
+            print(f"Error storing conversation: {e}")
+        finally:
+            self.database.close()

@@ -29,7 +29,7 @@ def get_model_ids():
     return list(api_request_list.keys())
 
 system_prompt = "You are chatting with a beneficiary of an NGO on a phone call. Your name is Rachel. The NGO is called FundANeed Foundation. It is your objective to determine how helpful cash transfer programs from this NGO were for this persons children. If the conversation strays off topic, guide it back. Be very concise and helpful."
-
+#system_prompt = "Act like a therapist but be concise in your responses. Roast the caller mercilessly. You will be having a phone call. The caller is in early 20s so please act accordingly."
 @dataclass
 class AppConfig:
     """Configuration for the voice chat application"""
@@ -43,8 +43,8 @@ class AppConfig:
     log_to_stdout: bool = False
     system_prompt: str = system_prompt
     polly: dict = field(default_factory=lambda: {
-        'engine' : 'neural', 
-        'language' : 'en-IN', 
-        'voice' : 'Kajal', 
+        'engine' : 'generative', 
+        'language' : 'en-US', 
+        'voice' : 'Joanna', 
         'outputFormat' : 'pcm'
     })

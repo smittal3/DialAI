@@ -1,0 +1,389 @@
+{
+  "conversations": {
+    "2": {
+      "metadata": {
+        "start_time": "2025-02-04T21:27:36.370177",
+        "end_time": "2025-02-04T21:28:32.968146",
+        "duration_seconds": 56
+      },
+      "transcript": "Agent: Hello! I'm calling on behalf of FundANeed Foundation. Is this Mrs. Sharma?\nCustomer: Yes, this is Priya Sharma speaking.\nAgent: Thank you Mrs. Sharma. I understand you received financial support from FundANeed Foundation last month. Could you confirm this?\nCustomer: Yes, that's correct. We received Rs. 50,000 to help with my daughter's college fees at Delhi University.\nAgent: Thank you for confirming. Could you tell me how helpful these funds were and what specific expenses they covered?\nCustomer: The funds were extremely helpful. My husband's small business was affected during COVID, and we were struggling with our savings. The money helped cover my daughter's first semester fees and her hostel deposit. She's studying B.Tech in Computer Science.\nAgent: I'm glad to hear the funds were helpful. Is there any other way FundANeed could have supported you and your family?\nCustomer: Well, it would have been helpful if they could provide some guidance about other scholarship opportunities or maybe some career counseling services for students. Many families like us are new to the college admission process.\nAgent: That's valuable feedback. Lastly, do you have any other suggestions or feedback for FundANeed Foundation?\nCustomer: Yes, the process was good, but it would be better if the application process was available in Hindi as well. Also, maybe they could create a WhatsApp group for beneficiaries to share information and opportunities. Otherwise, I'm very grateful for their support.\nAgent: Thank you so much for your time and detailed feedback, Mrs. Sharma. This will help us improve our services. Have a good day!\nCustomer: Thank you, you too. Goodbye.",
+      "sentiment": {
+        "conversation_id": 2,
+        "sentiment": "positive",
+        "supporting_quotes": [
+          "I'm very grateful for their support."
+        ]
+      },
+      "flags": null,
+      "feedback": {
+        "conversation_id": 2,
+        "feedback_type": "suggestion",
+        "impact": "medium",
+        "supporting_quotes": [
+          "create a WhatsApp group for beneficiaries"
+        ]
+      }
+    },
+    "1": {
+      "metadata": {
+        "start_time": "2025-02-04T21:27:36.370177",
+        "end_time": "2025-02-04T21:28:32.968146",
+        "duration_seconds": 56
+      },
+      "transcript": "Customer: Hi, can you hear me?\nAgent: Yes, I can hear you clearly. My name is Rachel, and I'm calling from the FundANeed Foundation. How are you today?\nCustomer: What is this about?\nAgent: We're conducting a follow-up to see how our cash transfer program has been helping the families we support. You've been a beneficiary of our program, and we're interested in hearing about your experience, specifically how it has impacted your children. Can you tell me a little bit about that?\nCustomer: Good and I appreciated the money but I could use some more.\nAgent: I'm glad to hear that the cash transfer was helpful. However, I'd like to focus on the impact it had on your children. Can you tell me specifically how the money helped them? For example, were you able to buy them food, clothes, or pay for their education?",
+      "sentiment": {
+        "conversation_id": 1,
+        "sentiment": "positive",
+        "supporting_quotes": [
+          "I appreciated the money"
+        ]
+      },
+      "flags": null,
+      "feedback": {
+        "conversation_id": 1,
+        "feedback_type": "suggestion",
+        "impact": "medium",
+        "supporting_quotes": [
+          "I could use some more."
+        ]
+      }
+    },
+    "10": {
+      "metadata": {
+        "start_time": "2025-02-04T17:25:12.345678",
+        "end_time": "2025-02-04T17:26:45.678901",
+        "duration_seconds": 93
+      },
+      "transcript": "Agent: Hello, I'm calling from FundANeed Foundation. Is this Mrs. Rebecca Thomas?\nCustomer: Yes, speaking.\nAgent: Could you confirm receiving educational support from FundANeed?\nCustomer: Yes, we received Rs. 45,000 for my son's diploma course in hotel management.\nAgent: How helpful were these funds?\nCustomer: The funds were crucial. After losing my husband last year, continuing my son's education was challenging. This support came at the right time.\nAgent: Is there any other way we could have supported you?\nCustomer: Maybe some career counseling services? And information about job placements in the hospitality industry would be helpful.\nAgent: Thank you. Any other feedback for FundANeed?\nCustomer: The foundation gave us hope during a difficult time. Just continue supporting students from all fields, not just engineering and medical.",
+      "sentiment": {
+        "conversation_id": 10,
+        "sentiment": "positive",
+        "supporting_quotes": [
+          "The foundation gave us hope during a difficult time."
+        ]
+      },
+      "flags": null,
+      "feedback": {
+        "conversation_id": 10,
+        "feedback_type": "suggestion",
+        "impact": "medium",
+        "supporting_quotes": [
+          "Maybe some career counseling services?"
+        ]
+      }
+    },
+    "12": {
+      "metadata": {
+        "start_time": "2025-02-04T16:45:12.334567",
+        "end_time": "2025-02-04T16:46:32.112345",
+        "duration_seconds": 80
+      },
+      "transcript": "Agent: Hello, I'm calling from FundANeed Foundation. Is this Mr. Joshi?\nCustomer: Yes, speaking.\nAgent: Could you confirm receiving educational support from FundANeed Foundation recently?\nCustomer: Support? When was this given?\nAgent: According to our records, a grant of Rs. 45,000 was disbursed last month for your son's engineering college fees.\nCustomer: There must be some mistake. My son completed engineering three years ago. He's working now.\nAgent: I see. Our records show an application was processed with your Aadhaar number and address proof last month.\nCustomer: What? I never applied recently. Someone must have misused my documents. Last year during a job application I had submitted some documents to a consultancy... Could you tell me when exactly this application was made?\nAgent: This is concerning. Could you confirm your Aadhaar number last 4 digits to verify?\nCustomer: Yes, it's 4832. Please look into this. I'm worried someone is misusing my identity.",
+      "sentiment": {
+        "conversation_id": 12,
+        "sentiment": "negative",
+        "supporting_quotes": [
+          "\"There must be some mistake.\""
+        ]
+      },
+      "flags": {
+        "conversation_id": 12,
+        "flag_reason": "",
+        "severity": "high",
+        "issue_type": "fraud",
+        "relevant_quotes": [
+          "Someone must have misused my documents."
+        ]
+      },
+      "feedback": {
+        "conversation_id": 12,
+        "feedback_type": "pain_point",
+        "impact": "high",
+        "supporting_quotes": [
+          "Someone must have misused my documents."
+        ]
+      }
+    },
+    "6": {
+      "metadata": {
+        "start_time": "2025-02-04T16:20:34.567890",
+        "end_time": "2025-02-04T16:21:59.123456",
+        "duration_seconds": 85
+      },
+      "transcript": "Agent: Hello, I'm calling from FundANeed Foundation. Is this Mr. Kumar?\nCustomer: Yes, Suresh Kumar speaking.\nAgent: Regarding the educational support you received, could you confirm the amount?\nCustomer: Yes, Rs. 55,000 for my daughter's medical entrance exam coaching.\nAgent: How helpful were these funds?\nCustomer: To be honest, I'm disappointed. The funds came two months late, and we had to borrow money initially. The coaching institute almost cancelled her admission.\nAgent: I'm sorry to hear that. How could we have helped better?\nCustomer: The foundation needs better planning. They should release funds before the academic year starts. Many families face this issue.\nAgent: Any other feedback you'd like to share?\nCustomer: Yes, please make the process faster. Education doesn't wait for funding delays.",
+      "sentiment": {
+        "conversation_id": 6,
+        "sentiment": "negative",
+        "supporting_quotes": [
+          "The funds came two months late"
+        ]
+      },
+      "flags": {
+        "conversation_id": 6,
+        "flag_reason": "",
+        "severity": "medium",
+        "issue_type": "complaint",
+        "relevant_quotes": [
+          "The foundation needs better planning."
+        ]
+      },
+      "feedback": {
+        "conversation_id": 6,
+        "feedback_type": "suggestion",
+        "impact": "high",
+        "supporting_quotes": [
+          "The foundation needs better planning."
+        ]
+      }
+    },
+    "9": {
+      "metadata": {
+        "start_time": "2025-02-04T15:40:23.456789",
+        "end_time": "2025-02-04T15:42:12.345678",
+        "duration_seconds": 109
+      },
+      "transcript": "Agent: Hello, I'm calling from FundANeed Foundation. Is this Mrs. Reshma Syed?\nCustomer: Yes, speaking.\nAgent: Could you confirm receiving educational support from FundANeed Foundation?\nCustomer: Yes, we received Rs. 35,000 for my daughter's arts college fees.\nAgent: How helpful were these funds?\nCustomer: Very helpful! My daughter is pursuing her Bachelor's in Fine Arts. The funds helped us buy her art supplies and pay partial fees. She's doing really well in her courses.\nAgent: How else could FundANeed have supported you?\nCustomer: Maybe they could organize art exhibitions or events where students could showcase their work? This could help them build portfolios and maybe even earn some money.\nAgent: That's an interesting suggestion. Any other feedback?\nCustomer: Just grateful for supporting arts education. Many think it's not a serious career choice, but FundANeed's support shows otherwise.",
+      "sentiment": {
+        "conversation_id": 9,
+        "sentiment": "positive",
+        "supporting_quotes": [
+          "Very helpful!"
+        ]
+      },
+      "flags": null,
+      "feedback": {
+        "conversation_id": 9,
+        "feedback_type": "suggestion",
+        "impact": "medium",
+        "supporting_quotes": [
+          "organize art exhibitions or events"
+        ]
+      }
+    },
+    "4": {
+      "metadata": {
+        "start_time": "2025-02-04T14:32:45.890123",
+        "end_time": "2025-02-04T14:33:15.445789",
+        "duration_seconds": 30
+      },
+      "transcript": "Agent: Hello, I'm calling from FundANeed Foundation. Is this Mrs. Lakshmi Venkatesh?\nCustomer: Yes, but I'm in the middle of something important. Can you call later?\nAgent: Of course, when would be a better time to discuss the educational support you received?\nCustomer: Sorry, I'm really busy this week. My daughter has exams. Maybe next week? Thank you, goodbye.",
+      "sentiment": {
+        "conversation_id": 4,
+        "sentiment": "negative",
+        "supporting_quotes": [
+          "Sorry, I'm really busy this week."
+        ]
+      },
+      "flags": null,
+      "feedback": null
+    },
+    "11": {
+      "metadata": {
+        "start_time": "2025-02-04T14:20:34.567890",
+        "end_time": "2025-02-04T14:22:15.123456",
+        "duration_seconds": 101
+      },
+      "transcript": "Agent: Hello, I'm calling from FundANeed Foundation. Is this Mrs. Desai?\nCustomer: Yes, speaking.\nAgent: Could you confirm receiving educational support from FundANeed Foundation for your son's coaching?\nCustomer: Yes, but I wanted to talk about this. We received much less than what was approved.\nAgent: Could you explain what you mean? Our records show we transferred Rs. 50,000.\nCustomer: The local coordinator, Mr. Sinha, said the approved amount was Rs. 50,000 but gave us only Rs. 30,000. He said there were 'processing fees' and 'administrative charges'. Many parents in our coaching center faced the same issue.\nAgent: I see. This is concerning. Could you tell me more about these charges?\nCustomer: He said it's normal procedure, but it didn't feel right. He made us sign some papers quickly. Three other families I know had the same experience. We were afraid to complain because we really needed the help.\nAgent: Thank you for bringing this to our attention. Would you be comfortable sharing more details about this situation?\nCustomer: I don't want any trouble. Just make sure other families don't face this. Maybe send the money directly to coaching centers or schools?",
+      "sentiment": {
+        "conversation_id": 11,
+        "sentiment": "negative",
+        "supporting_quotes": [
+          "We received much less than what was approved."
+        ]
+      },
+      "flags": {
+        "conversation_id": 11,
+        "flag_reason": "",
+        "severity": "medium",
+        "issue_type": "fraud",
+        "relevant_quotes": [
+          "He said there were 'processing fees' and 'administrative charges'."
+        ]
+      },
+      "feedback": {
+        "conversation_id": 11,
+        "feedback_type": "pain_point",
+        "impact": "high",
+        "supporting_quotes": [
+          "Maybe send the money directly to coaching centers or schools?"
+        ]
+      }
+    },
+    "14": {
+      "metadata": {
+        "start_time": "2025-02-04T13:25:34.567890",
+        "end_time": "2025-02-04T13:27:15.123456",
+        "duration_seconds": 101
+      },
+      "transcript": "Agent: Hello, I'm calling from FundANeed Foundation. Am I speaking with Mr. Reddy?\nCustomer: Yes, but I was about to call your office. None of us have received the funds.\nAgent: Could you elaborate? Who do you mean by 'us'?\nCustomer: Everyone who applied through the SMS camp at Krishna Colony last month. At least 15 families I know. We all got approval messages but no money. The school registration deadline is tomorrow.\nAgent: I see. Did everyone receive the approval confirmation by SMS?\nCustomer: Yes, we all got messages saying 'Your application is approved' but when we click the link to check status, it shows error. The local coordinator said system is updating but it's been 3 weeks.\nAgent: Did anyone from your group receive the funds?\nCustomer: No one. We're all middle-class parents, we don't have extra savings for fees. Some children already missed first week of classes.",
+      "sentiment": {
+        "conversation_id": 14,
+        "sentiment": "negative",
+        "supporting_quotes": [
+          "No one. We're all middle-class parents"
+        ]
+      },
+      "flags": {
+        "conversation_id": 14,
+        "flag_reason": "",
+        "severity": "high",
+        "issue_type": "urgent",
+        "relevant_quotes": [
+          "Some children already missed first week of classes."
+        ]
+      },
+      "feedback": {
+        "conversation_id": 14,
+        "feedback_type": "pain_point",
+        "impact": "high",
+        "supporting_quotes": [
+          "We all got messages saying 'Your application is approved' but no money."
+        ]
+      }
+    },
+    "7": {
+      "metadata": {
+        "start_time": "2025-02-04T13:10:56.789012",
+        "end_time": "2025-02-04T13:12:45.678901",
+        "duration_seconds": 109
+      },
+      "transcript": "Agent: Hello, I'm calling from FundANeed Foundation. Am I speaking with Ms. Soni?\nCustomer: Yes, this is Anjali Soni.\nAgent: Could you confirm receiving educational support from FundANeed?\nCustomer: Yes, we received Rs. 40,000 for my son's special education needs.\nAgent: How helpful were these funds? What were you able to do with them?\nCustomer: The funds were very helpful. We used them for his occupational therapy sessions and special education tutor. He's showing good improvement in academics now.\nAgent: Is there any other way we could have supported you?\nCustomer: It would be helpful if FundANeed could provide a list of verified special educators and therapists. Finding good professionals is challenging.\nAgent: Do you have any other feedback for the foundation?\nCustomer: Yes, please continue supporting special needs education. Many families like us struggle silently. Also, maybe create a parent support group?",
+      "sentiment": {
+        "conversation_id": 7,
+        "sentiment": "positive",
+        "supporting_quotes": [
+          "The funds were very helpful."
+        ]
+      },
+      "flags": null,
+      "feedback": {
+        "conversation_id": 7,
+        "feedback_type": "suggestion",
+        "impact": "high",
+        "supporting_quotes": [
+          "create a parent support group"
+        ]
+      }
+    },
+    "5": {
+      "metadata": {
+        "start_time": "2025-02-04T11:45:12.334567",
+        "end_time": "2025-02-04T11:47:02.112345",
+        "duration_seconds": 110
+      },
+      "transcript": "Agent: Hello, I'm calling from FundANeed Foundation. Is this Mrs. Meena Agarwal?\nCustomer: Yes, speaking.\nAgent: Could you confirm receiving educational support from FundANeed Foundation?\nCustomer: Yes, we received Rs. 60,000 for my twins' school fees. It was such a blessing!\nAgent: That's wonderful to hear. Could you tell me more about how the funds helped?\nCustomer: After my husband's salary was cut during company restructuring, we were worried about changing the children's school. The grant helped us maintain their education at the same school. Both are in 10th standard, a crucial year.\nAgent: Is there any other way FundANeed could have supported you?\nCustomer: Actually, yes. If they could provide some guidance on education loans or scholarships for higher education, it would be helpful. The twins will need that soon.\nAgent: Do you have any other feedback for FundANeed Foundation?\nCustomer: The whole process was very smooth and dignified. The staff was very understanding. Just one suggestion - maybe they could have a portal where we can track our application status instead of calling repeatedly.",
+      "sentiment": {
+        "conversation_id": 5,
+        "sentiment": "positive",
+        "supporting_quotes": [
+          "\"It was such a blessing!\""
+        ]
+      },
+      "flags": null,
+      "feedback": {
+        "conversation_id": 5,
+        "feedback_type": "suggestion",
+        "impact": "medium",
+        "supporting_quotes": [
+          "maybe they could have a portal"
+        ]
+      }
+    },
+    "8": {
+      "metadata": {
+        "start_time": "2025-02-04T10:05:34.567890",
+        "end_time": "2025-02-04T10:06:04.123456",
+        "duration_seconds": 30
+      },
+      "transcript": "Agent: Hello, I'm calling from FundANeed Foundation. Is this Mr. Banerjee?\nCustomer: Wrong number, no Banerjee here.\nAgent: I apologize for the inconvenience. Have a good day.",
+      "sentiment": {
+        "conversation_id": 8,
+        "sentiment": "negative",
+        "supporting_quotes": [
+          "Wrong number, no Banerjee here."
+        ]
+      },
+      "flags": {
+        "conversation_id": 8,
+        "flag_reason": "",
+        "severity": "low",
+        "issue_type": "technical",
+        "relevant_quotes": [
+          "Wrong number, no Banerjee here."
+        ]
+      },
+      "feedback": null
+    },
+    "3": {
+      "metadata": {
+        "start_time": "2025-02-04T09:15:23.184567",
+        "end_time": "2025-02-04T09:16:45.223890",
+        "duration_seconds": 82
+      },
+      "transcript": "Agent: Hello, I'm calling from FundANeed Foundation. Am I speaking with Mr. Patel?\nCustomer: Yes, this is Rajesh Patel.\nAgent: Mr. Patel, I'm calling regarding the educational support you received from FundANeed Foundation. Could you confirm receiving the funds?\nCustomer: Yes, we received Rs. 45,000 for my son's engineering coaching classes.\nAgent: How helpful were these funds? What were you able to accomplish with them?\nCustomer: Look, I appreciate the help, but it wasn't enough. The coaching institute costs Rs. 1,20,000 per year. I had to take a loan for the remaining amount. The process took too long as well.\nAgent: I understand your concern. How else could FundANeed have supported you better?\nCustomer: They should increase the grant amount. Also, they should have partnerships with coaching institutes for discounted fees. Many families are struggling with these high costs.\nAgent: Thank you for this feedback. Is there anything else you'd like to share about your experience?\nCustomer: No, that's all. Please convey this to the management. They need to understand that partial support sometimes puts more stress on families.",
+      "sentiment": {
+        "conversation_id": 3,
+        "sentiment": "negative",
+        "supporting_quotes": [
+          "it wasn't enough"
+        ]
+      },
+      "flags": {
+        "conversation_id": 3,
+        "flag_reason": "",
+        "severity": "medium",
+        "issue_type": "complaint",
+        "relevant_quotes": [
+          "partial support sometimes puts more stress on families"
+        ]
+      },
+      "feedback": {
+        "conversation_id": 3,
+        "feedback_type": "suggestion",
+        "impact": "medium",
+        "supporting_quotes": [
+          "They should increase the grant amount."
+        ]
+      }
+    },
+    "13": {
+      "metadata": {
+        "start_time": "2025-02-04T09:10:23.184567",
+        "end_time": "2025-02-04T09:11:45.223890",
+        "duration_seconds": 82
+      },
+      "transcript": "Agent: Hello, I'm calling from FundANeed Foundation. Is this Mrs. Gupta?\nCustomer: Yes, speaking.\nAgent: We're following up about the educational support approved for your daughter's college fees. Could you confirm if you received the funds?\nCustomer: No, I haven't received anything yet. I've been checking my account daily. The college is asking for fees next week.\nAgent: Our records show the amount was transferred last week to the account ending in 4573.\nCustomer: That's my old account. I provided the new account details when the bank merged. I submitted a letter about this change.\nAgent: When did you submit this update?\nCustomer: Two months ago at your local office. They said they would update it. I've been trying to call but no one answers. My daughter might lose her seat if we don't pay by next week.",
+      "sentiment": {
+        "conversation_id": 13,
+        "sentiment": "negative",
+        "supporting_quotes": [
+          "\"My daughter might lose her seat if we don't pay by next week.\""
+        ]
+      },
+      "flags": {
+        "conversation_id": 13,
+        "flag_reason": "",
+        "severity": "medium",
+        "issue_type": "technical",
+        "relevant_quotes": [
+          "My daughter might lose her seat if we don't pay by next week."
+        ]
+      },
+      "feedback": {
+        "conversation_id": 13,
+        "feedback_type": "pain_point",
+        "impact": "high",
+        "supporting_quotes": [
+          "My daughter might lose her seat if we don't pay by next week."
+        ]
+      }
+    }
+  },
+  "summary": {
+    "total_analyzed": 14,
+    "positive_sentiment": 6,
+    "negative_sentiment": 8,
+    "flagged": 7,
+    "with_feedback": 12
+  }
+}
