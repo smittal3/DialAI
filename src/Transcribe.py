@@ -9,6 +9,8 @@ from amazon_transcribe.handlers import TranscriptResultStreamHandler
 from amazon_transcribe.model import TranscriptEvent
 from Logger import Logger, LogComponent
 from Metrics import Metrics, MetricType
+from BaseThread import BaseThread
+import time
 
 class TranscribeHandler(TranscriptResultStreamHandler):
     def __init__(self,
@@ -43,7 +45,7 @@ class TranscribeHandler(TranscriptResultStreamHandler):
 
 
 # Blocks when silent, otherwise triggers transcribe and puts result in output queue to bedrock
-class Transcribe:
+class Transcribe(BaseThread):
     def __init__(self, 
                  vad_to_transcribe: queue.Queue,
                  transcribe_to_bedrock: queue.Queue,
@@ -51,40 +53,20 @@ class Transcribe:
                  silence_indicator: threading.Event,
                  system_interrupt: threading.Event,
                  config: AppConfig):
-
+        super().__init__(name="Transcribe")
         self.vad_to_transcribe = vad_to_transcribe
         self.transcribe_to_bedrock = transcribe_to_bedrock
         self.config = config
         self.user_interrupt = user_interrupt
         self.silence_indicator = silence_indicator
         self.system_interrupt = system_interrupt
-        self.thread: Optional[threading.Thread] = None
-        self.is_running = True
-        self.logger = Logger()
-        self.metrics = Metrics()
         
         # Initialize AWS client
         self.logger.info(LogComponent.TRANSCRIBE, f"Initializing AWS Transcribe client for region {config.aws_region}")
         self.client = TranscribeStreamingClient(region=config.aws_region)
 
-    def start(self):
-        if self.thread is not None and self.thread.is_alive():
-            return
-        def run_async_transcribe():
-            asyncio.run(self._transcribe_stream())
-
-        self.thread = threading.Thread(target=run_async_transcribe)
-        self.metrics.start_metric(MetricType.THREAD_LIFETIME, "transcribe_thread")
-        self.thread.start()
-        self.logger.info(LogComponent.TRANSCRIBE, "Transcription thread started")
-
-    def stop(self):
-        if self.thread is not None:
-            self.logger.info(LogComponent.TRANSCRIBE, "Stopping transcription thread")
-            self.is_running = False
-            self.thread.join()
-            self.metrics.end_metric(MetricType.THREAD_LIFETIME, "transcribe_thread")
-            self.thread = None
+    def _run_process(self):
+        asyncio.run(self._transcribe_stream())
 
     async def _transcribe_stream(self):
         while self.is_running:
@@ -123,6 +105,8 @@ class Transcribe:
                                 self.metrics.end_metric(MetricType.TRANSCRIPTION, "first_chunk_vad_to_transcribe")
                                 first_chunk = False
                             await stream.input_stream.send_audio_event(audio_chunk=data.tobytes())
+                            if self.system_interrupt.is_set():
+                                break
                         except queue.Empty:
                             if self.silence_indicator.is_set():
                                 self.logger.debug(LogComponent.TRANSCRIBE, "Silence detected, ending transcription stream")
@@ -147,4 +131,5 @@ class Transcribe:
             except Exception as e:
                 self.logger.error(LogComponent.TRANSCRIBE, f"Unexpected error: {e}")
         
-        
+    def stop(self):
+        super().stop()

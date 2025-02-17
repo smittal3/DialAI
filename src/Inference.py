@@ -8,9 +8,12 @@ from typing import Optional
 from botocore.config import Config
 from Logger import Logger, LogComponent
 from Metrics import Metrics, MetricType
+from BaseThread import BaseThread
+import time
 
-class LLMInference:
+class LLMInference(BaseThread):
     def __init__(self, config, user_interrupt, bedrock_context, bedrock_complete, transcribe_to_bedrock, bedrock_to_stt):
+        super().__init__(name="Inference")
         bedrock_config = Config(
             read_timeout=30,
             retries={'max_attempts': 2}
@@ -22,30 +25,10 @@ class LLMInference:
         self.bedrock_complete = bedrock_complete
         self.transcribe_to_bedrock = transcribe_to_bedrock
         self.bedrock_to_stt = bedrock_to_stt
-        self.thread: Optional[threading.Thread] = None
-        self.is_running = True
-        self.logger = Logger()
-        self.metrics = Metrics()
         self.logger.info(LogComponent.INFERENCE, "LLM Inference initialized")
 
-    def start(self):
-        if self.thread is not None and self.thread.is_alive():
-            return
-        def run_async_inference():
-            asyncio.run(self._get_response())
-
-        self.thread = threading.Thread(target=run_async_inference)
-        self.metrics.start_metric(MetricType.THREAD_LIFETIME, "inference_thread")
-        self.thread.start()
-        self.logger.info(LogComponent.INFERENCE, "Inference thread started")
-
-    def stop(self):
-        if self.thread is not None:
-            self.logger.info(LogComponent.INFERENCE, "Stopping inference thread")
-            self.is_running = False
-            self.thread.join()
-            self.metrics.end_metric(MetricType.THREAD_LIFETIME, "inference_thread")
-            self.thread = None
+    def _run_process(self):
+        asyncio.run(self._get_response())
 
     async def _get_response(self):
         try: 
@@ -128,7 +111,6 @@ class LLMInference:
                 if not any(buffer.endswith(p) for p in punctuation):
                     buffer += '.'
                 yield buffer
-
 
 class BedrockContext: 
     def __init__(self, config):

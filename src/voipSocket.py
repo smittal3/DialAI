@@ -3,12 +3,18 @@ import json
 import queue
 import threading
 import signal
-from quart import Quart, websocket, request, Response
+from threading import Thread, Event
+from queue import Queue
+import uvicorn
+from fastapi import FastAPI, WebSocket, Request
+from fastapi.responses import JSONResponse
 from config import AppConfig, api_request_list
 from Orchestrate import ConversationController
 from Logger import Logger, LogComponent
 from Metrics import Metrics, MetricType
-app = Quart(__name__)
+
+
+app = FastAPI()
 logger = Logger()
 
 class WebsocketStreams:
@@ -50,10 +56,11 @@ class WebsocketStreams:
     
     
 @app.websocket("/socket")
-async def handle_websocket():
+async def handle_websocket(websocket: WebSocket):
     logger.info(LogComponent.WEBSOCKET, "New WebSocket connection established")
+    await websocket.accept()
     # first receive is not audio data
-    await websocket.receive()
+    await websocket.receive_json()
     
     # setup streams and synchronization events
     websocket_streams = WebsocketStreams()
@@ -72,10 +79,14 @@ async def handle_websocket():
     
     async def read_from_websocket():
         while True:
-            data = await websocket.receive()
-            await websocket_streams.enqueue_input_stream(data)
-            if system_interrupt.is_set():
-                logger.info(LogComponent.WEBSOCKET, "Exiting websocket read")
+            try:
+                data = await websocket.receive_bytes()
+                await websocket_streams.enqueue_input_stream(data)
+                if system_interrupt.is_set():
+                    logger.info(LogComponent.WEBSOCKET, "Exiting websocket read")
+                    break
+            except Exception as e:
+                logger.error(LogComponent.WEBSOCKET, f"Error in websocket read: {e}")
                 break
     
     async def write_to_websocket():
@@ -95,22 +106,24 @@ async def handle_websocket():
                 while len(buffer) > 640:
                     data = buffer[:640]
                     buffer = buffer[640:]   
-                    await websocket.send(data)
+                    await websocket.send_bytes(bytes(data))
                     await asyncio.sleep(0.015)
                     i += 1
+
                 if user_interrupt.is_set():
                     logger.info(LogComponent.WEBSOCKET, "User interrupt set, clearing buffer")
                     with websocket_streams.output_stream.mutex:
                         websocket_streams.output_stream.queue.clear()
                         buffer = bytearray()
                         
+                if system_interrupt.is_set():
+                    logger.info(LogComponent.WEBSOCKET, "Exiting websocket write")
+                    break
+                        
                 if i % 200 == 0:
                     logger.debug(LogComponent.WEBSOCKET, f"Sent {i} packets")
                     await asyncio.sleep(0.5)
                 
-                if system_interrupt.is_set():
-                    logger.info(LogComponent.WEBSOCKET, "Exiting websocket write")
-                    break
             except Exception as e:
                 logger.error(LogComponent.WEBSOCKET, f"Error in websocket write: {e}")
                 break
@@ -146,13 +159,14 @@ async def handle_websocket():
         controller.stop_conversation()
     
     
-@app.route("/webhooks/events", methods=["POST", "GET"])
+@app.post("/webhooks/events")
+@app.get("/webhooks/events")
 async def events():
     logger.info(LogComponent.WEBSOCKET, "Event received")
     return "Event received", 200
 
-@app.route("/webhooks/answer")
-async def answer_call():
+@app.get("/webhooks/answer")
+async def answer_call(request: Request):
     logger.info(LogComponent.WEBSOCKET, "Answering new call")
     ncco = [
         {
@@ -165,11 +179,12 @@ async def answer_call():
             "endpoint": [
                 {
                     "type": "websocket",
-                    "uri": f"wss://{request.host}/socket",
+                    "uri": f"wss://{request.headers['host']}/socket",
                     "content-type": "audio/l16;rate=16000",
                 }
             ],
         },
     ]
 
-    return Response(json.dumps(ncco), content_type='application/json')
+    return JSONResponse(content=ncco)
+    

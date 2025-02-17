@@ -1,6 +1,17 @@
 from dataclasses import dataclass, field
 
 api_request_list = {
+    'meta.llama3-2-3b-instruct-v1:0': {
+        "modelId": "meta.llama3-2-3b-instruct-v1:0",
+        "contentType": "application/json",
+        "accept": "*/*",
+        "latency":"optimized",
+        "body": {"prompt":"",
+            "max_gen_len":250,
+            "temperature":0.1,
+            "top_p":0.9,
+        }
+    },
     'meta.llama3-1-70b-instruct-v1:0': {
         "modelId": "meta.llama3-1-70b-instruct-v1:0",
         "contentType": "application/json",

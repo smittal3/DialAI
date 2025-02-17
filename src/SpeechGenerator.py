@@ -9,43 +9,24 @@ from typing import Optional
 from botocore.config import Config
 from Logger import Logger, LogComponent
 from Metrics import Metrics, MetricType
+from BaseThread import BaseThread
 
 
-class SpeechGenerator:
+class SpeechGenerator(BaseThread):
     def __init__(self, config, user_interrupt, bedrock_complete, speech_complete, bedrock_to_stt, output_stream):
+        super().__init__(name="SpeechGenerator")
         self.config = config
         self.user_interrupt = user_interrupt
         self.bedrock_complete = bedrock_complete
         self.speech_complete = speech_complete
         self.bedrock_to_stt = bedrock_to_stt
         self.output_stream = output_stream
-        self.thread: Optional[threading.Thread] = None
-        self.is_running = True
-        self.logger = Logger()
-        self.metrics = Metrics()
+        
         self.logger.info(LogComponent.SPEECH, f"Initializing Polly client for region {config.aws_region}")
         self.polly = boto3.client('polly', region_name=config.aws_region)
         self.chunk_size = 640
 
-    def start(self):
-        if self.thread is not None and self.thread.is_alive():
-            return
-
-        self.is_running = True
-        self.thread = threading.Thread(target=self._generate_audio)
-        self.metrics.start_metric(MetricType.THREAD_LIFETIME, "speech_thread")
-        self.thread.start()
-        self.logger.info(LogComponent.SPEECH, "Speech generation thread started")
-
-    def stop(self):
-        if self.thread is not None:
-            self.logger.info(LogComponent.SPEECH, "Stopping speech generator thread")
-            self.is_running = False
-            self.thread.join()
-            self.metrics.end_metric(MetricType.THREAD_LIFETIME, "speech_thread")
-            self.thread = None
-
-    def _generate_audio(self):
+    def _run_process(self):
         first_chunk = True
         while self.is_running:
             try:
@@ -93,3 +74,5 @@ class SpeechGenerator:
                 continue
             except Exception as e:
                 self.logger.error(LogComponent.SPEECH, f"Error in Polly processing: {e}")
+
+   

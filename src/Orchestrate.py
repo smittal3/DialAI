@@ -92,13 +92,13 @@ class ConversationController:
         
         # Store conversation data
         self.end_time = datetime.now()
-        try:
-            self.database.store_conversation(
-                self.start_time,
-                self.end_time,
-                self.context.history,
-            )
-        except Exception as e:
-            print(f"Error storing conversation: {e}")
-        finally:
-            self.database.close()
+        # try:
+        #     self.database.store_conversation(
+        #         self.start_time,
+        #         self.end_time,
+        #         self.context.history,
+        #     )
+        # except Exception as e:
+        #     print(f"Error storing conversation: {e}")
+        # finally:
+        #     self.database.close()
