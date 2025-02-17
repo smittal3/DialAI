@@ -53,6 +53,16 @@ class ConversationController:
             # These two block in silence, one thread over the application
             self.transcribe.start() 
             self.vad.start()
+            
+            # do one inference call to warm up 
+            self.transcribe_to_bedrock.put("I am going to connect you to the call, are you ready? Respond with yes or no.")
+            self.inference.start()
+            self.bedrock_complete.wait()
+            with self.bedrock_to_stt.mutex:
+                self.bedrock_to_stt.queue.clear()
+            self.bedrock_complete.clear()
+            self.inference.stop()
+            
             while self.is_running:
                 # Wait for speech, then for silence
                 self.user_interrupt.wait()
