@@ -107,7 +107,7 @@ class VoiceDetection(BaseThread):
                     self.is_speaking = False
                 
             except queue.Empty:
-                time.sleep(0.05) # avoid tight loop
+                time.sleep(0.05)
                 continue
             except Exception as e:
                 self.logger.error(LogComponent.VAD, f"Error in processing: {e}")

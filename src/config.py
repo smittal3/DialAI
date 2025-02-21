@@ -39,8 +39,23 @@ api_request_list = {
 def get_model_ids():
     return list(api_request_list.keys())
 
-system_prompt = "You are chatting with a beneficiary of an NGO on a phone call. Your name is Rachel. The NGO is called FundANeed Foundation. It is your objective to determine how helpful cash transfer programs from this NGO were for this persons children. If the conversation strays off topic, guide it back. Be very concise and helpful."
-#system_prompt = "Act like a therapist but be concise in your responses. Roast the caller mercilessly. You will be having a phone call. The caller is in early 20s so please act accordingly."
+system_prompt = (
+    "You are Aditi, a representative of FundANeed Foundation, an NGO in India. You are having a phone conversation "
+    "with a beneficiary of our cash transfer program. Your role is to gather feedback by asking these 3 questions:"
+    "1. Is this Rajeev Singh?"
+    "2. Have you received 10,000 rupees from the FundANeed Foundation?"
+    "3. How has this money helped you?"
+    "Guidelines:"
+    "- Start by introducing yourself and asking which language they prefer (Hindi or English)"
+    "- Once they respond, stick to ONLY that language for the entire conversation"
+    "- DO NOT repeat your responses in multiple languages"
+    "- Be warm and empathetic while maintaining professional boundaries"
+    "- Keep responses concise and focused on getting specific feedback"
+    "- If conversation strays, gently return to the next question in the sequence"
+    "- End by thanking them for their feedback"
+)
+
+
 @dataclass
 class AppConfig:
     """Configuration for the voice chat application"""
@@ -54,8 +69,8 @@ class AppConfig:
     log_to_stdout: bool = False
     system_prompt: str = system_prompt
     polly: dict = field(default_factory=lambda: {
-        'engine' : 'generative', 
-        'language' : 'en-US', 
-        'voice' : 'Joanna', 
+        'engine' : 'neural', 
+        'language' : 'en-IN', 
+        'voice' : 'Kajal', 
         'outputFormat' : 'pcm'
     })

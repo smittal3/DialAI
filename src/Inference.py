@@ -12,7 +12,7 @@ from BaseThread import BaseThread
 import time
 
 class LLMInference(BaseThread):
-    def __init__(self, config, user_interrupt, bedrock_context, bedrock_complete, transcribe_to_bedrock, bedrock_to_stt):
+    def __init__(self, config, user_interrupt, bedrock_context, bedrock_complete, transcribe_complete, transcribe_to_bedrock, bedrock_to_stt):
         super().__init__(name="Inference")
         bedrock_config = Config(
             read_timeout=30,
@@ -22,6 +22,7 @@ class LLMInference(BaseThread):
         self.config = config
         self.user_interrupt = user_interrupt
         self.context = bedrock_context
+        self.transcribe_complete = transcribe_complete
         self.bedrock_complete = bedrock_complete
         self.transcribe_to_bedrock = transcribe_to_bedrock
         self.bedrock_to_stt = bedrock_to_stt
@@ -32,7 +33,9 @@ class LLMInference(BaseThread):
 
     async def _get_response(self):
         try: 
-            text = self.transcribe_to_bedrock.get(timeout=0.2)
+            self.logger.debug(LogComponent.INFERENCE, "Waiting for transcription to complete")
+            self.transcribe_complete.wait()
+            text = self.transcribe_to_bedrock.get(timeout=0.1)
             self.context.add_user_input(text)
             body = self.define_body(text)
             self.logger.debug(LogComponent.INFERENCE, f"Sending request to Bedrock with text: {body['prompt']}")
@@ -78,7 +81,6 @@ class LLMInference(BaseThread):
         except queue.Empty:
             self.logger.warning(LogComponent.INFERENCE, "No text received from transcription")
             self.bedrock_complete.set()
-                
         except Exception as e: 
             self.logger.error(LogComponent.INFERENCE, f"Bedrock Error: {e}")
     

@@ -67,6 +67,8 @@ async def handle_websocket(websocket: WebSocket):
     system_interrupt = threading.Event()
     user_interrupt = threading.Event()
     metrics = Metrics()
+    read_audio_task = None
+    write_audio_task = None
 
     config = AppConfig(
         aws_region="us-west-2",
@@ -128,35 +130,60 @@ async def handle_websocket(websocket: WebSocket):
                 logger.error(LogComponent.WEBSOCKET, f"Error in websocket write: {e}")
                 break
 
+    # Move signal_handler inside to access all variables
     def signal_handler():
+        nonlocal read_audio_task, write_audio_task
         logger.warning(LogComponent.SYSTEM, "Received interrupt signal, shutting down...")
-        system_interrupt.set()
-        user_interrupt.set()  # Unblock any waiting threads
-        controller.stop_conversation()
-        # Force clear all queues
-        with websocket_streams.input_stream.mutex:
-            websocket_streams.input_stream.queue.clear()
-        with websocket_streams.output_stream.mutex:
-            websocket_streams.output_stream.queue.clear()
-        
-    read_audio_task = asyncio.create_task(read_from_websocket())
-    write_audio_task = asyncio.create_task(write_to_websocket())
-    
+        try:
+            # Set system interrupt to break loops
+            system_interrupt.set()
+            
+            # First stop the conversation controller
+            controller.stop_conversation()
+            
+            # Then clear queues
+            with websocket_streams.input_stream.mutex:
+                websocket_streams.input_stream.queue.clear()
+            with websocket_streams.output_stream.mutex:
+                websocket_streams.output_stream.queue.clear()
+            
+            # Cancel the websocket tasks
+            if read_audio_task and not read_audio_task.done():
+                read_audio_task.cancel()
+            if write_audio_task and not write_audio_task.done():
+                print("Cancelling write_audio_task")
+                write_audio_task.cancel()
+            
+            # Finally stop the event loop
+            loop = asyncio.get_running_loop()
+            loop.create_task(websocket.close())
+            loop.stop()
+        except Exception as e:
+            logger.error(LogComponent.SYSTEM, f"Error in shutdown: {e}")
+
     try:
         # Run conversation controller in executor and gather with websocket tasks
         loop = asyncio.get_event_loop()
         loop.add_signal_handler(signal.SIGINT, signal_handler)
         loop.add_signal_handler(signal.SIGTERM, signal_handler)
 
+        read_audio_task = asyncio.create_task(read_from_websocket())
+        write_audio_task = asyncio.create_task(write_to_websocket())
+
         await asyncio.gather(
             read_audio_task,
             write_audio_task,
             loop.run_in_executor(None, controller.start_conversation)
         )
+    except Exception as e:
+        logger.error(LogComponent.WEBSOCKET, f"Error in websocket handler: {e}")
     finally:
-        read_audio_task.cancel()
-        write_audio_task.cancel()
+        if read_audio_task:
+            read_audio_task.cancel()
+        if write_audio_task:
+            write_audio_task.cancel()
         controller.stop_conversation()
+        await websocket.close()
     
     
 @app.post("/webhooks/events")

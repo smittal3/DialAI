@@ -26,7 +26,10 @@ class BaseThread:
         if self.thread is not None:
             self.logger.info(LogComponent.SYSTEM, f"Stopping {self.name} thread")
             self.is_running = False
-            self.thread.join(timeout=1)
+            try:
+                self.thread.join(timeout=1)
+            except Exception as e:
+                self.logger.error(LogComponent.SYSTEM, f"Error stopping {self.name} thread: {e}")
             self.thread = None
             
     def _run_process(self):

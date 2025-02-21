@@ -49,6 +49,7 @@ class Transcribe(BaseThread):
     def __init__(self, 
                  vad_to_transcribe: queue.Queue,
                  transcribe_to_bedrock: queue.Queue,
+                 transcribe_complete: threading.Event,
                  user_interrupt: threading.Event,
                  silence_indicator: threading.Event,
                  system_interrupt: threading.Event,
@@ -56,6 +57,7 @@ class Transcribe(BaseThread):
         super().__init__(name="Transcribe")
         self.vad_to_transcribe = vad_to_transcribe
         self.transcribe_to_bedrock = transcribe_to_bedrock
+        self.transcribe_complete = transcribe_complete
         self.config = config
         self.user_interrupt = user_interrupt
         self.silence_indicator = silence_indicator
@@ -81,7 +83,7 @@ class Transcribe(BaseThread):
                 if self.system_interrupt.is_set():
                     break
 
-                    
+                self.transcribe_complete.clear()
                 self.logger.info(LogComponent.TRANSCRIBE, "Starting AWS stream transcription")
                 self.metrics.start_metric(MetricType.TRANSCRIPTION, "initializing_transcribe_stream")
                 stream = await self.client.start_stream_transcription(
@@ -123,7 +125,9 @@ class Transcribe(BaseThread):
                 final_transcript = handler.get_transcript()
                 if final_transcript:
                     self.logger.info(LogComponent.TRANSCRIBE, f"Final transcript: {final_transcript}")
-                    self.transcribe_to_bedrock.put(final_transcript)             
+                    self.transcribe_to_bedrock.put(final_transcript) 
+                    self.logger.debug(LogComponent.TRANSCRIBE, "Transcribe complete, setting event")
+                    self.transcribe_complete.set()            
                     self.metrics.end_metric(MetricType.API_LATENCY, "transcribe_stream")
 
             except (BotoCoreError, ClientError) as e:

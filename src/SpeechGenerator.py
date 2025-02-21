@@ -45,11 +45,12 @@ class SpeechGenerator(BaseThread):
                     self.logger.debug(LogComponent.SPEECH, f"Generating speech for text: {text}")
                     self.metrics.start_metric(MetricType.API_LATENCY, "polly_synthesis")
                     response = self.polly.synthesize_speech(
-                        Text=text,
+                        Text=f"<speak><prosody rate='110%'>{text}</prosody></speak>",
                         Engine=self.config.polly['engine'],
                         LanguageCode=self.config.polly['language'],
                         VoiceId=self.config.polly['voice'],
-                        OutputFormat=self.config.polly['outputFormat']
+                        OutputFormat=self.config.polly['outputFormat'],
+                        TextType="ssml"
                     )
 
                     if first_chunk:
