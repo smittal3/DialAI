@@ -87,7 +87,10 @@ class Transcribe(BaseThread):
                 self.logger.info(LogComponent.TRANSCRIBE, "Starting AWS stream transcription")
                 self.metrics.start_metric(MetricType.TRANSCRIPTION, "initializing_transcribe_stream")
                 stream = await self.client.start_stream_transcription(
-                    language_code="en-US",
+                    language_code=None,
+                    identify_multiple_languages=True,
+                    language_options=["hi-IN", "en-IN"],
+                    preferred_language="en-IN",
                     media_sample_rate_hz=self.config.sample_rate,
                     media_encoding="pcm"
                 )
