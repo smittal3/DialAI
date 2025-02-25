@@ -3,7 +3,7 @@ import queue
 import asyncio
 import json
 import boto3
-from config import AppConfig, api_request_list
+from config import AppConfig, api_request_list, system_prompt
 from typing import Optional
 from botocore.config import Config
 from Logger import Logger, LogComponent
@@ -37,27 +37,34 @@ class LLMInference(BaseThread):
             self.transcribe_complete.wait()
             text = self.transcribe_to_bedrock.get(timeout=0.1)
             self.context.add_user_input(text)
-            body = self.define_body(text)
-            self.logger.debug(LogComponent.INFERENCE, f"Sending request to Bedrock with text: {body['prompt']}")
+            self.logger.debug(LogComponent.INFERENCE, f"Sending request to Bedrock with text: {self.context.get_context()}")
 
-            body_json = json.dumps(body)
             model_params = api_request_list[self.config.model_id]
             
             self.metrics.start_metric(MetricType.API_LATENCY, "bedrock_inference")
             self.metrics.start_metric(MetricType.INFERENCE, "bedrock_inference_request_time")
-            response = self.client.invoke_model_with_response_stream(
-                body=body_json, 
+            response = self.client.converse_stream(
                 modelId=model_params['modelId'], 
-                accept=model_params['accept'], 
-                contentType=model_params['contentType']
+                messages=self.context.history,
+                inferenceConfig={
+                    'maxTokens': model_params['body']['max_tokens'],
+                    'temperature': model_params['body']['temperature'],
+                    'topP': model_params['body']['top_p'],
+                    'stopSequences': model_params['body']['stopSequences']
+                },
+                system=[{
+                    'text': system_prompt
+                }],
+                performanceConfig={
+                    'latency': 'optimized'
+                }
             )
             self.metrics.end_metric(MetricType.INFERENCE, "bedrock_inference_request_time")
 
             full_response = ""
-            bedrock_stream = response.get('body')
             first_chunk = True
             
-            async for chunk in self.process_stream(bedrock_stream):
+            async for chunk in self.process_stream(response.get('stream')):
                 if first_chunk:
                     # Record time to first token
                     self.metrics.record_time_to_first_token("bedrock_inference", "bedrock_first_token")
@@ -71,7 +78,7 @@ class LLMInference(BaseThread):
                         self.bedrock_to_stt.queue.clear()
                     self.logger.warning(LogComponent.INFERENCE, "Inference interrupted by user")
                     break
-            
+
             # Store whatever has already been output
             self.context.add_bedrock_output(full_response)
             self.logger.info(LogComponent.INFERENCE, f"Complete response: {full_response}")
@@ -89,48 +96,47 @@ class LLMInference(BaseThread):
         body['prompt'] = self.context.get_context()
         return body
   
-    async def process_stream(self, bedrock_stream):
+    async def process_stream(self, stream):
         buffer = ''
         punctuation = '.,!?|'
         
-        if bedrock_stream:
-            for event in bedrock_stream:
-                chunk = event.get('chunk')
-                if chunk:
-                    chunk_obj = json.loads(chunk.get('bytes').decode())
-                    text = chunk_obj['generation']
+        for event in stream:
+            if 'contentBlockDelta' in event:
+                delta = event['contentBlockDelta'].get('delta', {})
+                if 'text' in delta:
+                    text = delta['text']
                     buffer += text
                 
                 # Stream out complete sentences on any punctuation
-                for punct in punctuation:
-                    while punct in buffer:
-                        sentence, buffer = buffer.split(punct, 1)
-                        yield sentence + punct
-                        
-            # Yield any remaining text in buffer
-            if buffer:
-                # Add appropriate punctuation if missing
-                if not any(buffer.endswith(p) for p in punctuation):
-                    buffer += '.'
-                yield buffer
+            for punct in punctuation:
+                while punct in buffer:
+                    sentence, buffer = buffer.split(punct, 1)
+                    yield sentence + punct
+                    
+        # Yield any remaining text in buffer
+        if buffer:
+            # Add appropriate punctuation if missing
+            if not any(buffer.endswith(p) for p in punctuation):
+                buffer += '.'
+            yield buffer
 
 class BedrockContext: 
     def __init__(self, config):
         self.history = []
-        self.formatted_context = f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n{config.system_prompt}<|eot_id|>\n"
+        self.formatted_context = f"<SYSTEM PROMPT>\n{system_prompt}\n<|SYSTEM PROMPT|>\n"
         self.logger = Logger()
         self.logger.debug(LogComponent.INFERENCE, "BedrockContext initialized")
   
     def add_user_input(self, user_input):
-        self.history.append({"role":"user", "message": user_input})
+        self.history.append({"role":"user", "content": [{"text": user_input}]})
         
-        user_turn = f"<|start_header_id|>user<|end_header_id|>\n\n{user_input}<|eot_id|>"
-        partial_model_tag = f"<|start_header_id|>assistant<|end_header_id|>"
+        user_turn = f"<USER>\n{user_input}\n<USER>"
+        partial_model_tag = f"<ASSISTANT>"
         self.formatted_context += f"{user_turn}\n{partial_model_tag}\n"
     
     def add_bedrock_output(self, bedrock_output):
-        self.history.append({"role":"assistant", "message": bedrock_output})
-        self.formatted_context += f"{bedrock_output}<|eot_id|>\n"
+        self.history.append({"role":"assistant", "content": [{"text": bedrock_output}]})
+        self.formatted_context += f"{bedrock_output}\n<ASSISTANT>"
   
     def get_context(self):
         return self.formatted_context

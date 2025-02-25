@@ -1,6 +1,31 @@
 from dataclasses import dataclass, field
 
 api_request_list = {
+    'us.anthropic.claude-3-5-haiku-20241022-v1:0': {
+        "modelId": "us.anthropic.claude-3-5-haiku-20241022-v1:0",
+        "contentType": "application/json",
+        "accept": "application/json",
+        "body": {
+            "anthropic_version": "bedrock-2023-05-31",
+            "system": "", 
+            "max_tokens": 200,
+            "top_k": 250,
+            "stopSequences": [],
+            "temperature": 1,
+            "top_p": 0.999,
+            "messages": [
+            {
+                "role": "user",
+                "content": [
+                {
+                    "type": "text",
+                    "text": "hello world"
+                }
+                ]
+            }
+            ]
+        }
+    },
     'meta.llama3-2-3b-instruct-v1:0': {
         "modelId": "meta.llama3-2-3b-instruct-v1:0",
         "contentType": "application/json",

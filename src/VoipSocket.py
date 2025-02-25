@@ -72,7 +72,7 @@ async def handle_websocket(websocket: WebSocket):
 
     config = AppConfig(
         aws_region="us-west-2",
-        model_id="meta.llama3-1-70b-instruct-v1:0",
+        model_id="us.anthropic.claude-3-5-haiku-20241022-v1:0",
         language_code="en-US"
     )
 
