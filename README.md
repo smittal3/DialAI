@@ -1,7 +1,9 @@
 # DialAI
 DialAI is an end-to-end, modular framework designed to handle dynamic conversation flow. It’s optimized for use cases requiring efficient data processing, such as automated customer interactions, surveys, and other real-time communication applications. The project aims to provide a scalable solution with a focus on low-latency operation and reliability, making it ideal for real-time high stake environments.
 
-Note: Checkout the websocket_integration branch for further improvements such as SileroVAD for voice activity detection, and integration with websocket webhooks. This allows connecting to VOIP providers. 
+## Feature Branch
+- **websocket_integration**: Enhanced voice activity detection with Silero VAD, async server layer with webhooks for websocket integration (VoIP use cases), latency analytics and improved conversational flow control. 
+
 
 ## 🚀 Key Features
 - **End-to-End Conversational Flow**: Seamlessly manages the entire conversation pipeline, from recording user audio to generating responses via inference and voice synthesis.
